@@ -1,0 +1,5 @@
+replica/screens/*
+!replica/screens/urls.txt
+node_modules/
+.next/
+.DS_Store

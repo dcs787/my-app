@@ -1,0 +1,35 @@
+feature,area,priority,original,clone,notes
+Import activity from GPX/TCX/FIT file,data,must,no,no,adapted: replaces HealthKit/device sync for web
+Enter an activity manually (distance time type),data,must,no,no,treadmill/gym and no-file case
+Activity list with type date distance,data,must,yes,no,S03 (guess)
+Units: miles or kilometres,settings,must,yes,no,screens show mi; ES locale implies km users
+9:16 story canvas with photo background,editor,must,yes,no,S04
+Solid or gradient background when no photo,editor,must,yes,no,edge case F01
+Add stat template from a sheet (Activity tab),editor,must,yes,no,S05
+Route trace element,editor,must,yes,no,S04 S05
+Drag pinch-scale and rotate elements,editor,must,yes,no,S04
+Change element font and colour,editor,must,yes,no,S04 right rail; S06 top bar
+Export 1080x1920 PNG and save/download,export,must,yes,no,S04 Photos button
+Share PNG via system share sheet (Instagram),export,must,yes,no,adapted from native IG Stories hand-off
+At least 20 original stat templates,templates,must,yes,no,original has 45+; ours designed fresh
+Copy a single sticker to clipboard,clipboard,should,yes,no,S06 F02
+Press-and-hold to save a sticker,clipboard,should,yes,no,S06
+Totals tab (week month year),templates,should,yes,no,S05/S06 tabs
+Free text element,editor,should,yes,no,S05 Aa text chip
+Splits chart template,templates,should,yes,no,S05 bottom tile
+Delete and reorder (layers) elements,editor,should,yes,no,S04 layers icon
+Remember last-used font and colour,editor,should,no,no,our improvement candidate
+Connect Strava via official API,data,should,no,no,original syncs devices; check Strava API agreement
+Install as PWA (home screen offline),platform,should,no,no,web platform choice
+Gear tab and gear stickers,templates,could,yes,no,S08 Aura Gear
+Comment and @mention elements,editor,could,yes,no,S05 chips
+Accounts and cloud sync of compositions,data,could,yes,no,original has accounts
+Spanish localisation,platform,could,yes,no,listing languages EN ES
+Draw / freehand tool,editor,could,yes,no,S04 pen icon (guess)
+Video background,editor,could,no,no,
+GPS tracker with live stats,tracker,skip,yes,skip,later phase (S09); needs native or background geolocation
+Runcam camera with live stats overlay,tracker,skip,yes,skip,later phase (S10)
+Social: stories feed explore profiles follow,social,skip,yes,skip,later phase (S11-S13)
+Direct messages,social,skip,yes,skip,later phase (S14)
+Apple HealthKit and Apple Watch sync,data,skip,yes,skip,not available to a web app
+Their template designs fonts and branding,brand,skip,yes,skip,owned by the original; rebuilt fresh
