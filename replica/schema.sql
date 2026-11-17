@@ -58,7 +58,7 @@ create table activities (
   user_id uuid not null references profiles(id) on delete cascade,
   connection_id uuid references connections(id) on delete set null,
   gear_id uuid references gear(id) on delete set null,
-  source text not null check (source in ('gpx', 'tcx', 'fit', 'manual', 'strava')),
+  source text not null check (source in ('apple_health', 'strava', 'gpx', 'tcx', 'fit', 'manual')),
   external_id text,                     -- provider id; null for files/manual
   file_hash text,                       -- sha-256 of an imported file
   type text not null default 'run'
@@ -78,7 +78,7 @@ create table activities (
   route_polyline text,                  -- Google encoded polyline, simplified
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  constraint external_needs_id check (source not in ('strava') or external_id is not null)
+  constraint external_needs_id check (source not in ('strava', 'apple_health') or external_id is not null)
 );
 create unique index activities_source_external on activities (user_id, source, external_id)
   where external_id is not null;

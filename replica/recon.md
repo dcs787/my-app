@@ -3,7 +3,7 @@
 Scope: **the stat-graphic editor** (import an activity, compose a story graphic
 from stat templates, export to Instagram Stories / camera roll / clipboard).
 Tracker, Runcam and the social layer are mapped below but are later phases.
-Platform for the clone: **mobile-first web app** (installable PWA).
+Platform for the clone: **native iPhone app (Expo / React Native)**, so it can sync Apple Health and Strava (revised 2026-11-17; was web).
 For: runners first; positioning to be decided by `/replica-entrepreneur`.
 Date: 2026-11-16
 
@@ -145,20 +145,17 @@ User 1-n Gear, Activity n-1 Gear (guess), User n-n User (Follow).
 
 ## Feature matrix
 
-See `features.csv`. Must: 13, should: 9, could: 6, skip: 6.
+See `features.csv`. Must: 17, should: 9, could: 6, skip: 5.
 
 ## Out of scope (cannot or should not be cloned)
 
 - **Their name, logo, template designs, fonts, wording and imagery.** Templates
   are rebuilt as our own layouts; "Aura" appears nowhere in the clone.
-- **Apple HealthKit / Apple Watch data** - not available to a web app. Adapted:
-  GPX/FIT/TCX file import first, Strava via its official API later (read its
-  API agreement before launch).
+- ~~Apple HealthKit~~ now **in scope**: the clone is a native app (revised
+  2026-11-17). Strava via its official API is in scope too.
 - **Garmin / Coros / Polar direct sync** - partner programs with approval; later.
 - **Their users, social graph and content** - the network is not a feature.
-- **Native "share to Instagram Stories" sticker hand-off** - iOS app-only API.
-  Adapted: Web Share API with the PNG (user picks Instagram), plus download and
-  copy-to-clipboard.
+- Native "share to Instagram Stories" is now in scope (native app).
 
 ## Size
 
