@@ -1,6 +1,7 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
 import type { Composition } from '@/domain/composition';
+import { isSameWorkout, MERGE_WINDOW_MS, mergePatch, type MergePatch } from '@/domain/merge';
 import type { Activity, NewActivity } from '@/domain/types';
 
 import { createEmitter, DEFAULT_SETTINGS, type Settings, type Store } from './store';
@@ -138,6 +139,27 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
     return null;
   }
 
+  async function applyMerge(id: string, p: MergePatch) {
+    const cols: Record<keyof MergePatch, string> = {
+      title: 'title',
+      routePolyline: 'route_polyline',
+      splits: 'splits',
+      avgHr: 'avg_hr',
+      maxHr: 'max_hr',
+      calories: 'calories',
+      elevationGainM: 'elevation_gain_m',
+      locationName: 'location_name',
+      type: 'type',
+    };
+    const keys = Object.keys(p) as (keyof MergePatch)[];
+    if (!keys.length) return;
+    const vals = keys.map((k) => (k === 'splits' ? JSON.stringify(p.splits) : (p[k] as string | number | null)));
+    await db.runAsync(
+      `UPDATE activities SET ${keys.map((k) => `${cols[k]} = ?`).join(', ')}, updated_at = ? WHERE id = ?`,
+      [...vals, now(), id],
+    );
+  }
+
   async function getComposition(id: string): Promise<Composition | null> {
     const r = await db.getFirstAsync<{ data: string; created_at: number; updated_at: number }>(
       'SELECT data, created_at, updated_at FROM compositions WHERE id = ?',
@@ -168,6 +190,17 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
     async insertActivity(a) {
       const dup = await findDuplicate(a);
       if (dup) return { activity: dup, duplicate: true };
+      const near = await db.getAllAsync<ActivityRow>(
+        'SELECT * FROM activities WHERE started_at BETWEEN ? AND ? AND source != ?',
+        [a.startedAt - MERGE_WINDOW_MS, a.startedAt + MERGE_WINDOW_MS, a.source],
+      );
+      const twin = near.map(fromRow).find((x) => isSameWorkout(x, a));
+      if (twin) {
+        await applyMerge(twin.id, mergePatch(twin, a));
+        events.emit();
+        const row = await db.getFirstAsync<ActivityRow>('SELECT * FROM activities WHERE id = ?', twin.id);
+        return { activity: fromRow(row!), duplicate: true, merged: true };
+      }
       const t = now();
       const activity: Activity = { ...a, id: newId(), createdAt: t, updatedAt: t };
       await db.runAsync(

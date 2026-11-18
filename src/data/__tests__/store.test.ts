@@ -118,14 +118,37 @@ describe.each(makers)('%s store', (_name, make) => {
     const again = await store.insertActivity(sample({ fileHash: 'same', title: 'Other' }));
     expect(again).toEqual({ activity: first.activity, duplicate: true });
 
-    const s1 = await store.insertActivity(sample({ source: 'strava', externalId: '42', fileHash: null }));
-    const s2 = await store.insertActivity(sample({ source: 'strava', externalId: '42', fileHash: null }));
+    const evening = Date.UTC(2026, 10, 17, 23);
+    const s1 = await store.insertActivity(sample({ source: 'strava', externalId: '42', fileHash: null, startedAt: evening }));
+    const s2 = await store.insertActivity(sample({ source: 'strava', externalId: '42', fileHash: null, startedAt: evening }));
     expect(s2.duplicate).toBe(true);
     expect(s2.activity.id).toBe(s1.activity.id);
     // same id from a different source is a different activity
-    const h = await store.insertActivity(sample({ source: 'apple_health', externalId: '42', fileHash: null }));
+    const h = await store.insertActivity(sample({ source: 'apple_health', externalId: '42', fileHash: null, startedAt: Date.UTC(2026, 10, 18, 7) }));
     expect(h.duplicate).toBe(false);
     expect(await store.listActivities()).toHaveLength(3);
+  });
+
+  it('merges the same workout recorded by Apple Health and Strava into one activity', async () => {
+    const t = Date.UTC(2026, 10, 17, 13);
+    const health = await store.insertActivity(
+      sample({ source: 'apple_health', externalId: 'hk-1', fileHash: null, startedAt: t, distanceM: 10000, routePolyline: null, avgHr: null, title: 'Morning run' }),
+    );
+    // Strava has the route, HR and the user's title; starts 40 s later, distance 1.5% off
+    const strava = await store.insertActivity(
+      sample({ source: 'strava', externalId: 's-9', fileHash: null, startedAt: t + 40_000, distanceM: 10150, avgHr: 152, title: 'Tempo Tuesday' }),
+    );
+    expect(strava.merged).toBe(true);
+    expect(strava.activity.id).toBe(health.activity.id);
+    expect(strava.activity).toMatchObject({ routePolyline: '_p~iF~ps|U_ulLnnqC', avgHr: 152, title: 'Tempo Tuesday', source: 'apple_health' });
+    expect(await store.listActivities()).toHaveLength(1);
+
+    // not the same workout: different sport, too far apart in time, or distance off by >3%
+    const ride = await store.insertActivity(sample({ source: 'strava', externalId: 's-10', fileHash: null, startedAt: t, type: 'ride', distanceM: 10000 }));
+    const later = await store.insertActivity(sample({ source: 'strava', externalId: 's-11', fileHash: null, startedAt: t + 5 * 60_000 }));
+    const longer = await store.insertActivity(sample({ source: 'gpx', fileHash: 'g', startedAt: t + 10_000, distanceM: 10600 }));
+    expect([ride, later, longer].map((r) => r.duplicate)).toEqual([false, false, false]);
+    expect(await store.listActivities()).toHaveLength(4);
   });
 
   it('updates and deletes, deleting the designs with the activity', async () => {

@@ -9,7 +9,12 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = { units: 'mi', lastFont: null, lastColour: null };
 
-export type InsertResult = { activity: Activity; duplicate: boolean };
+/**
+ * duplicate: the same file or provider activity was already saved.
+ * merged: the same workout from another app was saved; it was filled in with
+ * anything this one adds (route, heart rate...) instead of saving it twice.
+ */
+export type InsertResult = { activity: Activity; duplicate: boolean; merged?: boolean };
 
 /**
  * Everything the screens need from storage. Two implementations share it:
@@ -19,7 +24,7 @@ export type InsertResult = { activity: Activity; duplicate: boolean };
 export interface Store {
   listActivities(): Promise<Activity[]>;
   getActivity(id: string): Promise<Activity | null>;
-  /** Skips (and returns) the existing activity when the same file or provider id was imported before. */
+  /** Skips repeats of the same file or provider id, and merges the same workout recorded by another app. */
   insertActivity(a: NewActivity): Promise<InsertResult>;
   updateActivity(id: string, patch: Partial<Pick<Activity, 'title' | 'type' | 'locationName'>>): Promise<void>;
   deleteActivity(id: string): Promise<void>;

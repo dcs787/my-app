@@ -1,4 +1,5 @@
 import type { Composition } from '@/domain/composition';
+import { isSameWorkout, mergePatch } from '@/domain/merge';
 import type { Activity } from '@/domain/types';
 
 import { createEmitter, DEFAULT_SETTINGS, type Settings, type Store } from './store';
@@ -25,6 +26,13 @@ export function createMemoryStore(newId: () => string, now: () => number = Date.
           (input.externalId && a.source === input.source && a.externalId === input.externalId),
       );
       if (dup) return { activity: dup, duplicate: true };
+      const twin = activities.find((a) => isSameWorkout(a, input));
+      if (twin) {
+        const merged: Activity = { ...twin, ...mergePatch(twin, input), updatedAt: now() };
+        activities = activities.map((a) => (a.id === twin.id ? merged : a));
+        events.emit();
+        return { activity: merged, duplicate: true, merged: true };
+      }
       const t = now();
       const activity: Activity = { ...input, id: newId(), createdAt: t, updatedAt: t };
       activities.push(activity);
