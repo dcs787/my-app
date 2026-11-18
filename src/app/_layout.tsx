@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { StoreProvider } from '@/data';
 import { colors, fontFamily } from '@/theme';
 import { ToastProvider } from '@/ui';
 
@@ -51,6 +52,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaProvider>
         <ThemeProvider value={navTheme}>
+          <StoreProvider>
           <ToastProvider>
             <StatusBar style="light" />
             <Stack
@@ -65,6 +67,7 @@ export default function RootLayout() {
               <Stack.Screen name="design" options={{ title: 'Design system' }} />
             </Stack>
           </ToastProvider>
+          </StoreProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

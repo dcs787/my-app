@@ -1,0 +1,55 @@
+import type { Composition } from '@/domain/composition';
+import type { Activity, NewActivity, Units } from '@/domain/types';
+
+export type Settings = {
+  units: Units;
+  lastFont: string | null;
+  lastColour: string | null;
+};
+
+export const DEFAULT_SETTINGS: Settings = { units: 'mi', lastFont: null, lastColour: null };
+
+export type InsertResult = { activity: Activity; duplicate: boolean };
+
+/**
+ * Everything the screens need from storage. Two implementations share it:
+ * SQLite on device (sqliteStore) and memory for web previews and tests
+ * (memoryStore), so screens never know which one they're talking to.
+ */
+export interface Store {
+  listActivities(): Promise<Activity[]>;
+  getActivity(id: string): Promise<Activity | null>;
+  /** Skips (and returns) the existing activity when the same file or provider id was imported before. */
+  insertActivity(a: NewActivity): Promise<InsertResult>;
+  updateActivity(id: string, patch: Partial<Pick<Activity, 'title' | 'type' | 'locationName'>>): Promise<void>;
+  deleteActivity(id: string): Promise<void>;
+
+  getComposition(id: string): Promise<Composition | null>;
+  latestComposition(activityId: string): Promise<Composition | null>;
+  saveComposition(c: Omit<Composition, 'createdAt' | 'updatedAt'>): Promise<Composition>;
+
+  getSettings(): Promise<Settings>;
+  setSettings(patch: Partial<Settings>): Promise<Settings>;
+
+  /** Delete every activity, design and setting. */
+  wipe(): Promise<void>;
+
+  /** Called after any write, so screens can refresh. Returns an unsubscribe function. */
+  subscribe(listener: () => void): () => void;
+}
+
+/** Small helper both implementations use to notify subscribers. */
+export function createEmitter() {
+  const listeners = new Set<() => void>();
+  return {
+    subscribe(l: () => void) {
+      listeners.add(l);
+      return () => {
+        listeners.delete(l);
+      };
+    },
+    emit() {
+      listeners.forEach((l) => l());
+    },
+  };
+}
