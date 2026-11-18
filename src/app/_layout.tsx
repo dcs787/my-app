@@ -14,6 +14,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { StoreProvider } from '@/data';
+import { HealthObserver } from '@/features/HealthObserver';
 import { colors, fontFamily } from '@/theme';
 import { ToastProvider } from '@/ui';
 
@@ -54,6 +55,7 @@ export default function RootLayout() {
         <ThemeProvider value={navTheme}>
           <StoreProvider>
             <ToastProvider>
+              <HealthObserver />
               <StatusBar style="light" />
               <Stack
                 screenOptions={{

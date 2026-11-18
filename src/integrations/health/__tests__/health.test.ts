@@ -2,7 +2,7 @@ import { createMemoryStore } from '@/data/memoryStore';
 import { DEFAULT_SETTINGS } from '@/data/store';
 import { decodePolyline } from '@/domain/geo';
 import { northTrack } from '@/domain/__fixtures__/gpx';
-import { syncHealthNow } from '@/features/sources';
+import { syncHealthLatest, syncHealthNow } from '@/features/sources';
 
 import { mapHealthWorkout, offsetForZone, type HealthWorkout } from '../map';
 
@@ -86,5 +86,25 @@ describe('Apple Health sync', () => {
     settings = await store.getSettings();
     expect(settings.healthAnchor).toBe('A2');
     expect((await store.listActivities())[0].title).toBe('Fourth of July 5 miler');
+  });
+});
+
+describe('Apple Health background wake-ups', () => {
+  it('coalesces overlapping change events into one sync, and skips when disconnected', async () => {
+    const store = createMemoryStore(() => 'id');
+    let calls = 0;
+    const fetch = async () => {
+      calls++;
+      await new Promise((r) => setTimeout(r, 10));
+      return { workouts: [], deletedIds: [], anchor: `A${calls}` };
+    };
+    await syncHealthLatest(store, fetch);
+    expect(calls).toBe(0); // not connected yet
+    await store.setSettings({ healthConnected: true });
+    await Promise.all([syncHealthLatest(store, fetch), syncHealthLatest(store, fetch), syncHealthLatest(store, fetch)]);
+    expect(calls).toBe(1);
+    await syncHealthLatest(store, fetch);
+    expect(calls).toBe(2);
+    expect((await store.getSettings()).healthAnchor).toBe('A2');
   });
 });

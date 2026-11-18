@@ -6,7 +6,14 @@ import { deauthorize, StravaAuthError, StravaRateLimitError, syncStrava } from '
 import { STRAVA, stravaConfigured } from '@/integrations/strava/config';
 import { signInWithStrava, StravaCancelled } from '@/integrations/strava/connect';
 import { stravaTokens } from '@/integrations/strava/tokens';
-import { fetchWorkouts, healthAvailable, requestHealthAccess, type HealthBatch } from '@/integrations/health/healthkit';
+import {
+  disableBackgroundSync,
+  enableBackgroundSync,
+  fetchWorkouts,
+  healthAvailable,
+  requestHealthAccess,
+  type HealthBatch,
+} from '@/integrations/health/healthkit';
 import { mapHealthWorkout } from '@/integrations/health/map';
 
 /** Re-read a few days before the last sync: Strava filters by start time, and uploads can arrive late. */
@@ -41,6 +48,25 @@ export async function syncHealthNow(
   if (batch.deletedIds.length) await store.deleteByExternalIds('apple_health', batch.deletedIds);
   await store.setSettings({ healthAnchor: batch.anchor, healthSyncedAt: Date.now() });
   return summary;
+}
+
+/**
+ * Sync Health using the latest stored settings (anchor). Used by the change
+ * observer, which can fire while the app is in the background; overlapping
+ * calls share one run so the anchor is never read twice.
+ */
+let healthRun: Promise<SyncSummary> | null = null;
+export function syncHealthLatest(
+  store: Store,
+  fetch: (anchor: string | null, since: Date) => Promise<HealthBatch> = fetchWorkouts,
+): Promise<SyncSummary> {
+  healthRun ??= store
+    .getSettings()
+    .then((s) => (s.healthConnected ? syncHealthNow(store, s, fetch) : { added: 0, merged: 0 }))
+    .finally(() => {
+      healthRun = null;
+    });
+  return healthRun;
 }
 
 /** Sync every connected source; used by pull-to-refresh. Errors per source are collected, not thrown. */
@@ -141,11 +167,15 @@ export function useHealth() {
       run('connect', async () => {
         await requestHealthAccess();
         await store.setSettings({ healthConnected: true, healthAnchor: null });
+        await enableBackgroundSync().catch(() => {}); // best effort: manual sync still works
         return syncHealthNow(store, { ...settings, healthAnchor: null });
       }),
     sync: () => run('sync', () => syncHealthNow(store, settings)),
     /** Stops syncing. Imported workouts stay (they're the user's own data, on their phone). */
-    disconnect: () => store.setSettings({ healthConnected: false, healthAnchor: null, healthSyncedAt: null }),
+    disconnect: async () => {
+      await disableBackgroundSync().catch(() => {});
+      await store.setSettings({ healthConnected: false, healthAnchor: null, healthSyncedAt: null });
+    },
   };
 }
 

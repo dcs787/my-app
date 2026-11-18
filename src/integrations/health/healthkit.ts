@@ -115,3 +115,32 @@ function toMetres(q: Q): number {
       return q.quantity;
   }
 }
+
+/** UpdateFrequency.immediate: wake the app as soon as a workout is saved (iOS may batch). */
+const IMMEDIATE = 1;
+
+/**
+ * Ask iOS to wake the app when a workout is saved, even if the app was
+ * closed. The library persists this and re-registers the observer at launch.
+ */
+export async function enableBackgroundSync(): Promise<void> {
+  const mod = load();
+  if (!mod) return;
+  await mod.configureBackgroundTypes(['HKWorkoutTypeIdentifier'], IMMEDIATE as never);
+}
+
+export async function disableBackgroundSync(): Promise<void> {
+  const mod = load();
+  if (!mod) return;
+  await mod.clearBackgroundTypes();
+}
+
+/** Called when Health has new or deleted workouts (foreground, or a background wake-up). */
+export function onWorkoutsChanged(cb: () => void): () => void {
+  const mod = load();
+  if (!mod) return () => {};
+  const sub = mod.subscribeToChanges('HKWorkoutTypeIdentifier', () => cb());
+  return () => {
+    sub.remove();
+  };
+}

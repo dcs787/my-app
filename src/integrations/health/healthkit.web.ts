@@ -9,3 +9,8 @@ export type HealthBatch = { workouts: HealthWorkout[]; deletedIds: string[]; anc
 export async function fetchWorkouts(): Promise<HealthBatch> {
   throw new Error('Apple Health is only available on iPhone.');
 }
+export async function enableBackgroundSync(): Promise<void> {}
+export async function disableBackgroundSync(): Promise<void> {}
+export function onWorkoutsChanged(): () => void {
+  return () => {};
+}
