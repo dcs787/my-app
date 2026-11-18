@@ -1,7 +1,7 @@
 import { Canvas, Group, useImage } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Download, ImagePlus, Info, Layers, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
@@ -286,6 +286,12 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         <Text variant="sm" weight="600" numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
           {activity.title}
         </Text>
+        <IconButton
+          icon={Copy}
+          label="Copy stickers"
+          variant="solid"
+          onPress={() => router.push({ pathname: '/stickers/[activityId]', params: { activityId: activity.id } })}
+        />
         <IconButton icon={Layers} label="Layers" variant="solid" onPress={() => setPanel('layers')} />
         <IconButton icon={Info} label="Activity details" variant="solid" onPress={() => router.push({ pathname: '/activities/[id]', params: { id: activity.id } })} />
       </View>

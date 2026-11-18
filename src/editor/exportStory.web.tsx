@@ -21,6 +21,10 @@ export async function saveToPhotos(uri: string): Promise<void> {
   a.click();
 }
 
+export async function savePngToPhotos(base64: string): Promise<void> {
+  await saveToPhotos(`data:image/png;base64,${base64}`);
+}
+
 export async function shareStory(uri: string): Promise<void> {
   const blob = await (await fetch(uri)).blob();
   const file = new window.File([blob], 'story.png', { type: 'image/png' });

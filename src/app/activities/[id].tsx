@@ -1,5 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { Sparkles, Trash } from 'lucide-react-native';
+import { Copy, Sparkles, Trash } from 'lucide-react-native';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -130,6 +130,13 @@ function Detail({ activity: a, units }: { activity: Activity; units: Units }) {
       </View>
 
       <Button label="Make a story" icon={Sparkles} size="lg" fullWidth onPress={() => router.push({ pathname: '/edit/[activityId]', params: { activityId: a.id } })} />
+      <Button
+        label="Copy stickers"
+        icon={Copy}
+        variant="secondary"
+        fullWidth
+        onPress={() => router.push({ pathname: '/stickers/[activityId]', params: { activityId: a.id } })}
+      />
       <Button label="Delete activity" icon={Trash} variant="danger" fullWidth onPress={remove} />
     </ScrollView>
   );

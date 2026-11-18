@@ -67,6 +67,7 @@ export default function RootLayout() {
                 <Stack.Screen name="activities/new" options={{ title: 'Add an activity', presentation: 'modal' }} />
                 <Stack.Screen name="activities/[id]" options={{ title: 'Activity' }} />
                 <Stack.Screen name="edit/[activityId]" options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="stickers/[activityId]" options={{ title: 'Copy stickers' }} />
                 <Stack.Screen name="design" options={{ title: 'Design system' }} />
               </Stack>
             </ToastProvider>

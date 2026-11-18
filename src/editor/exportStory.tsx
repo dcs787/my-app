@@ -26,6 +26,14 @@ export async function saveToPhotos(uri: string): Promise<void> {
   await Asset.create(uri);
 }
 
+/** Save a PNG given as base64 (a sticker) to Photos. */
+export async function savePngToPhotos(base64: string): Promise<void> {
+  const file = new File(Paths.cache, `sticker-${Date.now()}.png`);
+  file.create({ overwrite: true });
+  file.write(base64, { encoding: 'base64' });
+  await saveToPhotos(file.uri);
+}
+
 /** Open the system share sheet (Instagram, Messages, AirDrop...). */
 export async function shareStory(uri: string): Promise<void> {
   if (!(await isAvailableAsync())) throw new Error('Sharing isn’t available on this device.');
