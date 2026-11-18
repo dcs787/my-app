@@ -21,6 +21,14 @@ npm start
 Scan the QR code with your iPhone camera to open the app in Expo Go. Apple
 Health needs a development build (milestone 2), not Expo Go.
 
+No workout file handy? Settings -> Add sample activities.
+
+To preview in a browser (the editor runs on Skia's WebAssembly build there):
+
+```bash
+npm run web
+```
+
 Other commands:
 
 ```bash
@@ -51,6 +59,9 @@ python3 .claude/skills/replica-design/contrast.py replica/design/tokens.json
 ```
 src/app/          screens (expo-router; every file is a route)
 src/ui/           design-system components (Button, Sheet, TemplateTile, ...)
+src/domain/       activity model, GPX parsing, stats, formatting (no React)
+src/data/         storage: SQLite on device, memory on web and in tests
+src/editor/       story editor: templates, Skia scene, export
 src/theme/        generated tokens + helpers
 replica/          planning: recon, architecture, schema, design specs
 .claude/skills/   the replica-* skill pack (MIT, Jake Schincariol)

@@ -1,28 +1,28 @@
 feature,area,priority,original,clone,notes
-Import activity from GPX/TCX/FIT file,data,must,no,no,watch exports via share sheet / document picker
-Enter an activity manually (distance time type),data,must,no,no,treadmill/gym and no-file case
-Activity list with type date distance,data,must,yes,no,S03 (guess)
-Units: miles or kilometres,settings,must,yes,no,screens show mi; ES locale implies km users
-9:16 story canvas with photo background,editor,must,yes,no,S04
-Solid or gradient background when no photo,editor,must,yes,no,edge case F01
-Add stat template from a sheet (Activity tab),editor,must,yes,no,S05
-Route trace element,editor,must,yes,no,S04 S05
-Drag pinch-scale and rotate elements,editor,must,yes,no,S04
-Change element font and colour,editor,must,yes,no,S04 right rail; S06 top bar
-Export 1080x1920 PNG matching the screen,export,must,yes,no,S04; Skia offscreen render
+Import activity from GPX/TCX/FIT file,data,must,no,partial,GPX done (dedupe by file hash); TCX and FIT in M2
+Enter an activity manually (distance time type),data,must,no,yes,validated form; goes straight to the editor
+Activity list with type date distance,data,must,yes,yes,"loading skeleton, empty state, add sheet"
+Units: miles or kilometres,settings,must,yes,yes,Settings; splits stored in both units
+9:16 story canvas with photo background,editor,must,yes,yes,photo picked + downscaled to 2160px; picker verified on device still to do
+Solid or gradient background when no photo,editor,must,yes,yes,6 presets
+Add stat template from a sheet (Activity tab),editor,must,yes,yes,S05 sheet with live previews; unavailable tiles say why
+Route trace element,editor,must,yes,yes,route and route+stats templates; ends trimmed 200 m for privacy
+Drag pinch-scale and rotate elements,editor,must,yes,yes,drag verified in browser; pinch/twist need a device check
+Change element font and colour,editor,must,yes,yes,"5 OFL font styles, 10 colours"
+Export 1080x1920 PNG matching the screen,export,must,yes,yes,same Skia scene offscreen; verified 1080x1920
 Share directly to Instagram Stories,export,must,yes,no,S04; react-native-share + Meta app ID
-System share sheet and save to Photos,export,must,yes,no,S04 Photos button
-At least 20 original stat templates,templates,must,yes,no,original has 45+; ours designed fresh
+System share sheet and save to Photos,export,must,yes,yes,expo-sharing + media library; device check pending
+At least 20 original stat templates,templates,must,yes,partial,7 so far
 Copy a single sticker to clipboard,clipboard,should,yes,no,S06 F02
 Press-and-hold to save a sticker,clipboard,should,yes,no,S06
 Totals tab (week month year),templates,should,yes,no,S05/S06 tabs
 Free text element,editor,should,yes,no,S05 Aa text chip
-Splits chart template,templates,should,yes,no,S05 bottom tile
-Delete and reorder (layers) elements,editor,should,yes,no,S04 layers icon
-Remember last-used font and colour,editor,should,no,no,our improvement candidate
+Splits chart template,templates,should,yes,yes,"bars per mi/km, faster = longer"
+Delete and reorder (layers) elements,editor,should,yes,partial,delete + bring to front; no layers list yet
+Remember last-used font and colour,editor,should,no,yes,saved in settings
 Connect Strava and sync activities,data,must,no,no,official API; one athlete until Strava review; check API agreement
 Merge the same run from Apple Health and Strava,data,must,no,no,type + start within 2 min + distance within 3%
-Works offline (local-first),platform,should,no,no,on-device SQLite
+Works offline (local-first),platform,should,no,yes,SQLite on device; nothing uploaded
 Gear tab and gear stickers,templates,could,yes,no,S08 Aura Gear
 Comment and @mention elements,editor,could,yes,no,S05 chips
 Accounts and cloud sync of compositions,data,could,yes,no,original has accounts
