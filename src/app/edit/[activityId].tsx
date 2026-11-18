@@ -1,14 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
 
-import { Text } from '@/ui';
+import { EditorHost } from '@/editor/EditorHost';
 
-// Replaced by the editor in the next commit.
-export default function EditorScreen() {
+export default function EditorRoute() {
   const { activityId } = useLocalSearchParams<{ activityId: string }>();
-  return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <Text>Editor for {activityId}</Text>
-    </View>
-  );
+  return <EditorHost activityId={activityId} />;
 }

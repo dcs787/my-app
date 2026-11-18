@@ -2,7 +2,9 @@
 
 export const CANVAS = { w: 1080, h: 1920 } as const;
 
-export type FontId = 'inter' | 'inter-black' | 'serif' | 'mono' | 'condensed';
+export type FontId = 'inter' | 'display' | 'serif' | 'mono' | 'condensed';
+
+export const FONT_IDS: FontId[] = ['inter', 'display', 'serif', 'mono', 'condensed'];
 
 export type Background =
   | { kind: 'photo'; uri: string; width: number; height: number }

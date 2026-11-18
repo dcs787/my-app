@@ -46,3 +46,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Skia web runtime, copied by `npm run web:setup`
+public/canvaskit.wasm
