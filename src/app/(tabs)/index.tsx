@@ -9,6 +9,8 @@ import { formatDistance, formatDuration, formatDay, SOURCE_LABEL, unitLabel } fr
 import type { Activity, Units } from '@/domain/types';
 import { pickAndImport, summarise } from '@/features/importFiles';
 import { describeSync, syncAll, syncErrorMessage, useHealth, useStrava } from '@/features/sources';
+import { healthAvailable } from '@/integrations/health/healthkit';
+import { stravaConfigured } from '@/integrations/strava/config';
 import { colors, radius } from '@/theme';
 import { Button, EmptyState, IconButton, ListRow, Sheet, useToast } from '@/ui';
 
@@ -69,7 +71,7 @@ export default function ActivitiesScreen() {
           <EmptyState
             icon={FileUp}
             title="Bring in your first workout"
-            body="Sync from Apple Health or Strava, open a file from your watch, or type one in."
+            body={emptyBody()}
             actions={<AddButtons add={add} />}
           />
         </View>
@@ -92,6 +94,12 @@ export default function ActivitiesScreen() {
       </Sheet>
     </>
   );
+}
+
+function emptyBody(): string {
+  const sources = [healthAvailable() && 'Apple Health', stravaConfigured() && 'Strava'].filter(Boolean);
+  const sync = sources.length ? `Sync from ${sources.join(' or ')}, open` : 'Open';
+  return `${sync} a GPX, TCX or FIT file from your watch, or type one in.`;
 }
 
 function useAddActions(units: Units, done: () => void) {

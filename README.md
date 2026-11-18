@@ -18,8 +18,10 @@ npm install
 npm start
 ```
 
-Scan the QR code with your iPhone camera to open the app in Expo Go. Apple
-Health needs a development build (milestone 2), not Expo Go.
+Scan the QR code with your iPhone camera to open the app in Expo Go.
+
+Apple Health, Strava and direct Instagram sharing need a development build
+and a few free or paid accounts: see **[SETUP.md](SETUP.md)**.
 
 No workout file handy? Settings -> Add sample activities.
 
@@ -61,7 +63,10 @@ src/app/          screens (expo-router; every file is a route)
 src/ui/           design-system components (Button, Sheet, TemplateTile, ...)
 src/domain/       activity model, GPX parsing, stats, formatting (no React)
 src/data/         storage: SQLite on device, memory on web and in tests
-src/editor/       story editor: templates, Skia scene, export
+src/editor/       story editor: templates, Skia scene, export, Instagram share
+src/integrations/ Apple Health and Strava
+src/features/     import and sync flows used by screens
+supabase/         the Strava token function (the only server code)
 src/theme/        generated tokens + helpers
 replica/          planning: recon, architecture, schema, design specs
 .claude/skills/   the replica-* skill pack (MIT, Jake Schincariol)
