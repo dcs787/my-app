@@ -5,7 +5,9 @@ export const MERGE_WINDOW_MS = 2 * 60_000;
 /** How far apart their distances can be (GPS vs. watch vs. phone). */
 export const MERGE_DISTANCE_TOLERANCE = 0.03;
 
-const FAMILY: Record<ActivityType, string> = {
+export type SportFamily = 'run' | 'walk' | 'ride' | 'swim' | 'other';
+
+const FAMILY: Record<ActivityType, SportFamily> = {
   run: 'run',
   trail_run: 'run',
   walk: 'walk',
@@ -15,6 +17,8 @@ const FAMILY: Record<ActivityType, string> = {
   workout: 'other',
   other: 'other',
 };
+
+export const sportFamily = (t: ActivityType): SportFamily => FAMILY[t];
 
 type Comparable = Pick<Activity, 'type' | 'startedAt' | 'distanceM' | 'source'>;
 

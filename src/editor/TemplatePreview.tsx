@@ -1,6 +1,7 @@
 import { Canvas, Group, RoundedRect } from '@shopify/react-native-skia';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import type { Period, Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
 import { colors, focusRing, radius } from '@/theme';
 import { Text } from '@/ui';
@@ -26,10 +27,12 @@ export function TemplateGrid({
   fonts,
   width,
   onPick,
+  totals,
 }: {
   templates: TemplateDef[];
   activity: Activity;
   units: Units;
+  totals?: Record<Period, Totals>;
   fonts: FontPair;
   width: number;
   onPick: (id: string) => void;
@@ -56,7 +59,7 @@ export function TemplateGrid({
                   { translateY: y + (tile - t.size.h * k) / 2 },
                   { scale: k },
                 ]}>
-                <Shapes shapes={t.render({ activity, units })} fonts={fonts} colour={colors.text} />
+                <Shapes shapes={t.render({ activity, units, totals })} fonts={fonts} colour={colors.text} />
               </Group>
             </Group>
           );

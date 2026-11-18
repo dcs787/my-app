@@ -7,8 +7,9 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensio
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useActivity, useSettings, useStore } from '@/data';
+import { useActivities, useActivity, useSettings, useStore } from '@/data';
 import { CANVAS, FONT_IDS, type Background, type Composition } from '@/domain/composition';
+import { computeTotals, type Period, type Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
 import {
   addElement,
@@ -105,6 +106,15 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
   const [area, setArea] = useState({ w: 0, h: 0 });
 
   const selected = doc.elements.find((e) => e.id === selectedId) ?? null;
+  const { data: allActivities } = useActivities();
+  const totals = useMemo<Record<Period, Totals>>(
+    () => ({
+      week: computeTotals(allActivities, activity, 'week'),
+      month: computeTotals(allActivities, activity, 'month'),
+      year: computeTotals(allActivities, activity, 'year'),
+    }),
+    [allActivities, activity],
+  );
   const photo = useImage(doc.background.kind === 'photo' ? doc.background.uri : null);
   const scale = area.w && area.h ? Math.min(area.w / CANVAS.w, area.h / CANVAS.h) : 0;
   const style: Style = selected ? { colour: selected.colour, font: selected.font } : { colour: '#FFFFFF', font: initial.elements[0]?.font ?? 'inter' };
@@ -214,7 +224,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     setSelectedId(null);
     setBusy(kind);
     try {
-      const uri = await renderStory({ composition: doc, activity, units, fonts, photo });
+      const uri = await renderStory({ composition: doc, activity, units, fonts, photo, totals });
       if (kind === 'save') {
         await saveToPhotos(uri);
         toast('Saved to Photos', Download);
@@ -256,7 +266,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
               testID="story-canvas">
               <Canvas style={{ width: CANVAS.w * scale, height: CANVAS.h * scale }}>
                 <Group transform={[{ scale }]}>
-                  <Scene composition={doc} activity={activity} units={units} fonts={fonts} photo={photo} selectedId={selectedId} />
+                  <Scene composition={doc} activity={activity} units={units} fonts={fonts} photo={photo} selectedId={selectedId} totals={totals} />
                 </Group>
               </Canvas>
             </View>
@@ -301,7 +311,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         )}
       </View>
 
-      <TemplateSheet open={panel === 'templates'} onClose={() => setPanel(null)} onPick={add} activity={activity} units={units} fonts={fonts} style={style} />
+      <TemplateSheet open={panel === 'templates'} onClose={() => setPanel(null)} onPick={add} activity={activity} units={units} fonts={fonts} style={style} totals={totals} />
 
       <Sheet open={panel === 'background'} onClose={() => setPanel(null)} title="Background">
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}>
@@ -350,6 +360,7 @@ function TemplateSheet({
   units,
   fonts,
   style,
+  totals,
 }: {
   open: boolean;
   onClose: () => void;
@@ -358,6 +369,7 @@ function TemplateSheet({
   units: Units;
   fonts: TemplateFonts;
   style: Style;
+  totals: Record<Period, Totals>;
 }) {
   const [tab, setTab] = useState<'activity' | 'totals' | 'gear'>('activity');
   const { width } = useWindowDimensions();
@@ -379,10 +391,10 @@ function TemplateSheet({
         />
       </View>
       {list.length === 0 ? (
-        <EmptyState icon={Plus} title="Coming soon" body={tab === 'totals' ? 'Weekly and monthly totals arrive in the next update.' : 'Gear stickers for your shoes and bikes are on the way.'} />
+        <EmptyState icon={Plus} title="Coming soon" body="Gear stickers for your shoes and bikes are on the way." />
       ) : (
         <ScrollView contentContainerStyle={styles.tileGrid}>
-          <TemplateGrid templates={list} activity={activity} units={units} fonts={fonts[style.font]} width={gridWidth} onPick={onPick} />
+          <TemplateGrid templates={list} activity={activity} units={units} fonts={fonts[style.font]} width={gridWidth} onPick={onPick} totals={totals} />
         </ScrollView>
       )}
     </Sheet>

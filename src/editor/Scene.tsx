@@ -13,6 +13,7 @@ import {
 } from '@shopify/react-native-skia';
 
 import { CANVAS, type CanvasElement, type Composition } from '@/domain/composition';
+import type { Period, Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
 
 import type { FontPair, TemplateFonts } from './fonts';
@@ -27,13 +28,15 @@ export type SceneProps = {
   /** decoded background photo, when the background is a photo */
   photo: SkImage | null;
   selectedId?: string | null;
+  /** totals for the periods containing the activity (Totals stickers) */
+  totals?: Record<Period, Totals>;
 };
 
 /**
  * The whole story at 1080 x 1920. Props only (no hooks or context), because the
  * export renders it offscreen with drawAsImage, outside the app's React tree.
  */
-export function Scene({ composition, activity, units, fonts, photo, selectedId }: SceneProps) {
+export function Scene({ composition, activity, units, fonts, photo, selectedId, totals }: SceneProps) {
   return (
     <Group>
       <Background bg={composition.background} photo={photo} />
@@ -43,6 +46,7 @@ export function Scene({ composition, activity, units, fonts, photo, selectedId }
           element={el}
           activity={activity}
           units={units}
+          totals={totals}
           fonts={fonts[el.font] ?? fonts.inter}
           selected={el.id === selectedId}
         />
@@ -82,18 +86,20 @@ function ElementView({
   element: el,
   activity,
   units,
+  totals,
   fonts,
   selected,
 }: {
   element: CanvasElement;
   activity: Activity;
   units: Units;
+  totals?: Record<Period, Totals>;
   fonts: FontPair;
   selected: boolean;
 }) {
   const t = templateById(el.templateId);
   if (!t) return null;
-  const shapes = t.render({ activity, units });
+  const shapes = t.render({ activity, units, totals });
   return (
     <Group
       transform={[

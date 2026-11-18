@@ -11,11 +11,17 @@ import {
   weekdayName,
 } from '@/domain/format';
 import { decodePolyline, projectToBox, trimEnds } from '@/domain/geo';
+import { computeTotals, countLabel, type Period, type Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
 
 import type { Shape } from './shapes';
 
-export type TemplateInput = { activity: Activity; units: Units };
+export type TemplateInput = {
+  activity: Activity;
+  units: Units;
+  /** totals for the periods containing this activity; computed from the activity alone if absent */
+  totals?: Record<Period, Totals>;
+};
 export type Need = 'route' | 'splits' | 'distance' | 'time' | 'hr' | 'climb' | 'calories';
 
 export type TemplateDef = {
@@ -67,6 +73,15 @@ function routePoints(a: Activity, w: number, h: number, pad: number) {
   const pts = decodePolyline(a.routePolyline);
   const trimmed = trimEnds(pts, ROUTE_PRIVACY_TRIM_M);
   return projectToBox(trimmed.length >= 2 ? trimmed : pts, w, h, pad);
+}
+
+const tot = (input: TemplateInput, period: Period): Totals =>
+  input.totals?.[period] ?? computeTotals([input.activity], input.activity, period);
+
+/** distance with unit, or the time when the sport has no distance (gym) */
+function totalHeadline(t: Totals, units: Units): string {
+  if (t.distanceM > 0) return `${formatDistance(t.distanceM, units)} ${unitLabel.distance(units)}`;
+  return formatDuration(t.movingTimeS) ?? '0:00';
 }
 
 type Stat = { label: string; value: string; unit?: string };
@@ -422,6 +437,87 @@ export const TEMPLATES: TemplateDef[] = [
         { kind: 'text', text: `fastest ${units === 'mi' ? 'mile' : 'km'} · #${best.index}`, x: 400, y: 70, size: 52, face: 'label', align: 'center', caps: true, opacity: 0.85 },
         { kind: 'text', text: `${value ?? ''}`, x: 400, y: 290, size: 220, face: 'value', align: 'center', maxWidth: 640 },
         { kind: 'text', text: unit, x: 400, y: 360, size: 48, face: 'label', align: 'center', opacity: 0.85 },
+      ];
+    },
+  },
+  // ---- totals (the week, month or year containing this activity, same sport)
+  {
+    id: 'total-week',
+    name: 'Week total',
+    category: 'totals',
+    size: { w: 900, h: 440 },
+    render(input) {
+      const t = tot(input, 'week');
+      return [
+        { kind: 'text', text: t.label, x: 450, y: 70, size: 56, face: 'label', align: 'center', caps: true, opacity: 0.85 },
+        { kind: 'text', text: totalHeadline(t, input.units), x: 450, y: 290, size: 200, face: 'value', align: 'center', maxWidth: 880 },
+        { kind: 'text', text: [countLabel(t), formatDuration(t.movingTimeS)].filter(Boolean).join('  ·  '), x: 450, y: 400, size: 56, face: 'label', align: 'center', opacity: 0.85 },
+      ];
+    },
+  },
+  {
+    id: 'total-week-days',
+    name: 'Week days',
+    category: 'totals',
+    size: { w: 900, h: 400 },
+    render(input) {
+      const t = tot(input, 'week');
+      const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+      const cell = 900 / 7;
+      return [
+        { kind: 'text', text: t.label, x: 450, y: 60, size: 52, face: 'label', align: 'center', caps: true, opacity: 0.85 },
+        ...t.activeDays.flatMap((on, i): Shape[] => [
+          { kind: 'rect', x: i * cell + cell / 2 - 44, y: 110, w: 88, h: 88, r: 44, ...(on ? {} : { stroke: 6, opacity: 0.5 }) },
+          { kind: 'text', text: letters[i], x: i * cell + cell / 2, y: 260, size: 48, face: 'label', align: 'center', opacity: on ? 1 : 0.5 },
+        ]),
+        { kind: 'text', text: `${countLabel(t)}  ·  ${totalHeadline(t, input.units)}`, x: 450, y: 370, size: 64, face: 'value', align: 'center', maxWidth: 880 },
+      ];
+    },
+  },
+  {
+    id: 'total-week-stats',
+    name: 'Week in numbers',
+    category: 'totals',
+    size: { w: 960, h: 270 },
+    render(input) {
+      const t = tot(input, 'week');
+      const cells: Stat[] = [
+        { label: t.family === 'other' ? 'Workouts' : `${countLabel(t).split(' ')[1]}`, value: String(t.count) },
+        { label: 'Distance', value: formatDistance(t.distanceM, input.units) ?? '0', unit: unitLabel.distance(input.units) },
+        { label: 'Time', value: formatDuration(t.movingTimeS) ?? '0:00' },
+      ];
+      const col = 960 / 3;
+      return [
+        { kind: 'text', text: t.label, x: 480, y: 50, size: 48, face: 'label', align: 'center', caps: true, opacity: 0.85 },
+        ...cells.flatMap((c, i) => statCell(c, col * i + col / 2, 120, 92, col, 'center')),
+      ];
+    },
+  },
+  {
+    id: 'total-month',
+    name: 'Month total',
+    category: 'totals',
+    size: { w: 900, h: 440 },
+    render(input) {
+      const t = tot(input, 'month');
+      return [
+        { kind: 'text', text: t.label, x: 450, y: 80, size: 72, face: 'value', align: 'center', maxWidth: 880 },
+        { kind: 'text', text: totalHeadline(t, input.units), x: 450, y: 300, size: 200, face: 'value', align: 'center', maxWidth: 880 },
+        { kind: 'text', text: [countLabel(t), t.elevationGainM ? `${formatElevation(t.elevationGainM, input.units)} ${unitLabel.elevation(input.units)} climbed` : null].filter(Boolean).join('  ·  '), x: 450, y: 405, size: 52, face: 'label', align: 'center', opacity: 0.85, maxWidth: 880 },
+      ];
+    },
+  },
+  {
+    id: 'total-year',
+    name: 'Year so far',
+    category: 'totals',
+    size: { w: 900, h: 460 },
+    render(input) {
+      const t = tot(input, 'year');
+      return [
+        { kind: 'text', text: t.label, x: 450, y: 170, size: 190, face: 'value', align: 'center', opacity: 0.35 },
+        { kind: 'text', text: totalHeadline(t, input.units), x: 450, y: 330, size: 150, face: 'value', align: 'center', maxWidth: 880 },
+        { kind: 'text', text: `${countLabel(t)} this year`, x: 450, y: 425, size: 52, face: 'label', align: 'center', opacity: 0.85 },
       ];
     },
   },
