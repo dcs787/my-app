@@ -1,9 +1,13 @@
 import { router } from 'expo-router';
-import { FlaskConical, Palette, Trash } from 'lucide-react-native';
+import { Activity as ActivityIcon, FlaskConical, Link2, Palette, RefreshCw, Trash, Unlink } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { confirm } from '@/components/confirm';
+import { SourceCard } from '@/components/SourceCard';
 import { sampleActivities, useSettings, useStore } from '@/data';
+import { describeSync, syncErrorMessage, timeAgo, useStrava } from '@/features/sources';
+import { deauthorize } from '@/integrations/strava/client';
+import { stravaTokens } from '@/integrations/strava/tokens';
 import { Button, Chip, ListRow, Text, useToast } from '@/ui';
 
 export default function SettingsScreen() {
@@ -20,17 +24,22 @@ export default function SettingsScreen() {
   async function wipe() {
     const ok = await confirm({
       title: 'Delete everything?',
-      message: 'All activities, story designs and settings on this phone are removed. This can’t be undone.',
+      message: 'All activities, story designs, settings and connections on this phone are removed. This can’t be undone.',
       confirmLabel: 'Delete everything',
       destructive: true,
     });
     if (!ok) return;
+    await deauthorize(stravaTokens);
     await store.wipe();
     toast('All data deleted');
   }
 
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+      <Section title="Connections">
+        <StravaCard />
+      </Section>
+
       <Section title="Units">
         <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Units">
           <Chip label="Miles and feet" variant="toggle" selected={settings.units === 'mi'} onPress={() => store.setSettings({ units: 'mi' })} />
@@ -58,6 +67,70 @@ export default function SettingsScreen() {
         </View>
       )}
     </ScrollView>
+  );
+}
+
+function StravaCard() {
+  const strava = useStrava();
+  const toast = useToast();
+  const report = (e: unknown) => {
+    const msg = syncErrorMessage(e);
+    if (msg) toast(msg);
+  };
+
+  if (!strava.configured) {
+    return (
+      <SourceCard
+        icon={ActivityIcon}
+        name="Strava"
+        status="Not set up in this build"
+        note="Add the Strava keys described in SETUP.md, then rebuild."
+      />
+    );
+  }
+  if (!strava.connected) {
+    return (
+      <SourceCard
+        icon={ActivityIcon}
+        name="Strava"
+        status="Not connected"
+        note="Compatible with Strava. Reads your activities to make stories. Nothing is posted to Strava.">
+        <Button
+          label="Connect to Strava"
+          icon={Link2}
+          loading={strava.busy === 'connect'}
+          onPress={() => strava.connect().then((r) => toast(`Strava connected. ${describeSync(r)}`), report)}
+        />
+      </SourceCard>
+    );
+  }
+  return (
+    <SourceCard icon={ActivityIcon} name="Strava" status={`${strava.athlete} · synced ${timeAgo(strava.syncedAt)}`}>
+      <Button
+        label="Sync now"
+        icon={RefreshCw}
+        variant="secondary"
+        size="sm"
+        loading={strava.busy === 'sync'}
+        onPress={() => strava.sync().then((r) => toast(describeSync(r)), report)}
+      />
+      <Button
+        label="Disconnect"
+        icon={Unlink}
+        variant="danger"
+        size="sm"
+        loading={strava.busy === 'disconnect'}
+        onPress={async () => {
+          const ok = await confirm({
+            title: 'Disconnect Strava?',
+            message: 'Activities that came from Strava, and their story designs, are removed from this phone.',
+            confirmLabel: 'Disconnect',
+            destructive: true,
+          });
+          if (ok) strava.disconnect().then((n) => toast(`Disconnected. ${n} Strava activities removed.`), report);
+        }}
+      />
+    </SourceCard>
   );
 }
 

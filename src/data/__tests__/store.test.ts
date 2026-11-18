@@ -10,7 +10,7 @@ import type { NewActivity } from '@/domain/types';
 
 import { createMemoryStore } from '../memoryStore';
 import { createSqliteStore, migrate } from '../sqliteStore';
-import type { Store } from '../store';
+import { DEFAULT_SETTINGS, type Store } from '../store';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { DatabaseSync } = require('node:sqlite');
@@ -178,12 +178,28 @@ describe.each(makers)('%s store', (_name, make) => {
   });
 
   it('keeps settings with defaults, and wipe clears everything', async () => {
-    expect(await store.getSettings()).toEqual({ units: 'mi', lastFont: null, lastColour: null });
-    expect(await store.setSettings({ units: 'km', lastColour: '#FFFFFF' })).toEqual({ units: 'km', lastFont: null, lastColour: '#FFFFFF' });
+    expect(await store.getSettings()).toEqual(DEFAULT_SETTINGS);
+    expect(await store.setSettings({ units: 'km', lastColour: '#FFFFFF', stravaSyncedAt: 123, healthConnected: true })).toEqual({
+      ...DEFAULT_SETTINGS,
+      units: 'km',
+      lastColour: '#FFFFFF',
+      stravaSyncedAt: 123,
+      healthConnected: true,
+    });
     await store.insertActivity(sample());
     await store.wipe();
     expect(await store.listActivities()).toEqual([]);
     expect((await store.getSettings()).units).toBe('mi');
+  });
+
+  it('deletes everything from one source, with its designs', async () => {
+    const { activity: s1 } = await store.insertActivity(sample({ source: 'strava', externalId: '1', fileHash: null, startedAt: 1 }));
+    await store.insertActivity(sample({ source: 'strava', externalId: '2', fileHash: null, startedAt: 2 }));
+    await store.insertActivity(sample({ startedAt: 10_000_000 }));
+    await store.saveComposition({ id: 'c1', activityId: s1.id, background: { kind: 'solid', colour: '#000000' }, elements: [] });
+    expect(await store.deleteBySource('strava')).toBe(2);
+    expect((await store.listActivities()).map((a) => a.source)).toEqual(['gpx']);
+    expect(await store.getComposition('c1')).toBeNull();
   });
 
   it('notifies subscribers on writes', async () => {

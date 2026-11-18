@@ -252,6 +252,11 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
       await db.runAsync('DELETE FROM activities WHERE id = ?', id);
       events.emit();
     },
+    async deleteBySource(source) {
+      const r = await db.runAsync('DELETE FROM activities WHERE source = ?', source);
+      if (r.changes) events.emit();
+      return r.changes;
+    },
     getComposition,
     async latestComposition(activityId) {
       const r = await db.getFirstAsync<{ id: string }>(

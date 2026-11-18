@@ -48,6 +48,13 @@ export function createMemoryStore(newId: () => string, now: () => number = Date.
       compositions = compositions.filter((c) => c.activityId !== id); // cascade, like the SQL schema
       events.emit();
     },
+    async deleteBySource(source) {
+      const gone = new Set(activities.filter((a) => a.source === source).map((a) => a.id));
+      activities = activities.filter((a) => !gone.has(a.id));
+      compositions = compositions.filter((c) => !gone.has(c.activityId));
+      if (gone.size) events.emit();
+      return gone.size;
+    },
     async getComposition(id) {
       return compositions.find((c) => c.id === id) ?? null;
     },

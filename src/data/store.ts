@@ -5,9 +5,27 @@ export type Settings = {
   units: Units;
   lastFont: string | null;
   lastColour: string | null;
+  /** connected Strava athlete's name, null when not connected */
+  stravaAthlete: string | null;
+  /** ms since epoch of the last successful Strava sync */
+  stravaSyncedAt: number | null;
+  /** Apple Health connected (permission asked) */
+  healthConnected: boolean;
+  /** HealthKit anchored-query anchor, so each sync only fetches what's new */
+  healthAnchor: string | null;
+  healthSyncedAt: number | null;
 };
 
-export const DEFAULT_SETTINGS: Settings = { units: 'mi', lastFont: null, lastColour: null };
+export const DEFAULT_SETTINGS: Settings = {
+  units: 'mi',
+  lastFont: null,
+  lastColour: null,
+  stravaAthlete: null,
+  stravaSyncedAt: null,
+  healthConnected: false,
+  healthAnchor: null,
+  healthSyncedAt: null,
+};
 
 /**
  * duplicate: the same file or provider activity was already saved.
@@ -28,6 +46,8 @@ export interface Store {
   insertActivity(a: NewActivity): Promise<InsertResult>;
   updateActivity(id: string, patch: Partial<Pick<Activity, 'title' | 'type' | 'locationName'>>): Promise<void>;
   deleteActivity(id: string): Promise<void>;
+  /** Remove everything that came from one source (e.g. after disconnecting Strava). Returns how many. */
+  deleteBySource(source: Activity['source']): Promise<number>;
 
   getComposition(id: string): Promise<Composition | null>;
   latestComposition(activityId: string): Promise<Composition | null>;
