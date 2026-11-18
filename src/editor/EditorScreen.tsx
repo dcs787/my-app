@@ -1,7 +1,7 @@
 import { Canvas, Group, useImage } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Download, ImagePlus, Info, Palette, Plus, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Download, ImagePlus, Info, Palette, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
@@ -22,6 +22,7 @@ import {
   type Style,
 } from './compose';
 import { PhotosPermissionError, renderStory, saveToPhotos, shareStory } from './exportStory';
+import { canShareToInstagram, shareToInstagramStory } from './instagram';
 import { FONT_NAMES, TemplateFontsProvider, useTemplateFonts, type TemplateFonts } from './fonts';
 import { pickBackgroundPhoto } from './pickPhoto';
 import { Scene } from './Scene';
@@ -96,7 +97,11 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
   const [doc, setDoc] = useState<Draft>(initial);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
-  const [busy, setBusy] = useState<'save' | 'share' | null>(null);
+  const [busy, setBusy] = useState<'save' | 'share' | 'instagram' | null>(null);
+  const [instagram, setInstagram] = useState(false);
+  useEffect(() => {
+    canShareToInstagram().then(setInstagram, () => setInstagram(false));
+  }, []);
   const [area, setArea] = useState({ w: 0, h: 0 });
 
   const selected = doc.elements.find((e) => e.id === selectedId) ?? null;
@@ -205,7 +210,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     }
   }
 
-  async function exportAs(kind: 'save' | 'share') {
+  async function exportAs(kind: 'save' | 'share' | 'instagram') {
     setSelectedId(null);
     setBusy(kind);
     try {
@@ -213,6 +218,12 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
       if (kind === 'save') {
         await saveToPhotos(uri);
         toast('Saved to Photos', Download);
+      } else if (kind === 'instagram') {
+        try {
+          await shareToInstagramStory(uri);
+        } catch {
+          await shareStory(uri); // Instagram refused or isn't there: the share sheet still works
+        }
       } else {
         await shareStory(uri);
       }
@@ -276,8 +287,18 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         <IconButton icon={Plus} label="Add a sticker" variant="solid" onPress={() => setPanel('templates')} />
         <IconButton icon={ImagePlus} label="Background" variant="solid" onPress={() => setPanel('background')} />
         <View style={{ flex: 1 }} />
-        <Button label="Save" icon={Download} variant="secondary" loading={busy === 'save'} disabled={!!busy} onPress={() => exportAs('save')} />
-        <Button label="Share" icon={Share} loading={busy === 'share'} disabled={!!busy} onPress={() => exportAs('share')} />
+        {instagram ? (
+          <>
+            <IconButton icon={Download} label="Save to Photos" variant="solid" disabled={!!busy} onPress={() => exportAs('save')} />
+            <IconButton icon={Share} label="Share" variant="solid" disabled={!!busy} onPress={() => exportAs('share')} />
+            <Button label="Instagram" icon={Send} loading={busy === 'instagram'} disabled={!!busy} onPress={() => exportAs('instagram')} />
+          </>
+        ) : (
+          <>
+            <Button label="Save" icon={Download} variant="secondary" loading={busy === 'save'} disabled={!!busy} onPress={() => exportAs('save')} />
+            <Button label="Share" icon={Share} loading={busy === 'share'} disabled={!!busy} onPress={() => exportAs('share')} />
+          </>
+        )}
       </View>
 
       <TemplateSheet open={panel === 'templates'} onClose={() => setPanel(null)} onPick={add} activity={activity} units={units} fonts={fonts} style={style} />
