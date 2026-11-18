@@ -13,12 +13,12 @@ Export 1080x1920 PNG matching the screen,export,must,yes,yes,same Skia scene off
 Share directly to Instagram Stories,export,must,yes,yes,needs EXPO_PUBLIC_META_APP_ID; falls back to the share sheet; device check pending
 System share sheet and save to Photos,export,must,yes,yes,expo-sharing + media library; device check pending
 At least 20 original stat templates,templates,must,yes,yes,20 original designs
-Copy a single sticker to clipboard,clipboard,should,yes,no,S06 F02
-Press-and-hold to save a sticker,clipboard,should,yes,no,S06
-Totals tab (week month year),templates,should,yes,no,S05/S06 tabs
-Free text element,editor,should,yes,no,S05 Aa text chip
+Copy a single sticker to clipboard,clipboard,should,yes,yes,S06: transparent 2x PNG via expo-clipboard; verified in browser
+Press-and-hold to save a sticker,clipboard,should,yes,yes,S06
+Totals tab (week month year),templates,should,yes,yes,"5 designs; same sport, by local date"
+Free text element,editor,should,yes,yes,"one line, shrinks to fit, up to 80 characters"
 Splits chart template,templates,should,yes,yes,"bars per mi/km, faster = longer"
-Delete and reorder (layers) elements,editor,should,yes,partial,delete + bring to front; no layers list yet
+Delete and reorder (layers) elements,editor,should,yes,yes,"layers sheet: select, forward/back, delete"
 Remember last-used font and colour,editor,should,no,yes,saved in settings
 Connect Strava and sync activities,data,must,no,yes,needs Strava keys + token function (SETUP.md); single-athlete until Strava review
 Merge the same run from Apple Health and Strava,data,must,no,yes,"same sport family, start within 2 min, distance within 3%"
@@ -35,4 +35,4 @@ Social: stories feed explore profiles follow,social,skip,yes,skip,later phase (S
 Direct messages,social,skip,yes,skip,later phase (S14)
 Sync workouts from Apple Health (incl. Apple Watch),data,must,yes,yes,"anchored sync, deletions, time zones; needs a dev build; device check pending"
 Their template designs fonts and branding,brand,skip,yes,skip,owned by the original; rebuilt fresh
-Background sync of new Apple Health workouts,data,should,no,no,HealthKit background delivery
+Background sync of new Apple Health workouts,data,should,no,yes,HealthKit background delivery; device check pending

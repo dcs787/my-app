@@ -140,6 +140,9 @@ the Instagram URL scheme.
 - [ ] Open a run → add a photo → Instagram → the story opens in Instagram
 - [ ] Save → the image is in Photos
 - [ ] Settings → Disconnect Strava → its activities are removed
+- [ ] Close the app, record a Watch workout, wait a few minutes, open the app:
+      the workout is already there (background sync)
+- [ ] Copy stickers → tap one → paste it onto a photo in an Instagram story
 
 ## Later: App Store
 

@@ -2,7 +2,7 @@
 
 One line per screen. Screenshots in `replica/clone-screens/` (590 px wide, the
 reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
-**75.0 / 100**, must-haves **13 of 13**
+**75.0**, milestone 3 **91.1 / 100**, must-haves **13 of 13**
 (`python3 .claude/skills/replica-diff/parity.py replica/features.csv`).
 
 | ID | screen | date | status | missing | harder than expected |
@@ -10,10 +10,10 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
 | S01 | Onboarding | 2026-11-18 | partial | no welcome flow; connect buttons live in the empty state and Settings | |
 | S02 | Import, connections, manual entry | 2026-11-18 | done | "Open in" from the Files app / share sheet | Strava's code exchange needs a client secret, so a tiny server function was unavoidable |
 | S03 | Activity list + detail | 2026-11-18 | done | swipe to delete | |
-| S04 | Story editor | 2026-11-18 | done | free text; layers list | Skia on web must load after its WebAssembly runtime, so the editor module is loaded lazily on web |
-| S05 | Sticker sheet | 2026-11-18 | done | Totals and Gear tabs say "coming soon" | 20 preview canvases exhausted the browser's WebGL contexts; now one canvas for the grid |
-| S06 | Sticker copy page | | not started | milestone 3 | |
-| S07 | Totals | | not started | milestone 3 | |
+| S04 | Story editor | 2026-11-18 | done | comment/@mention stickers, freehand draw | Skia on web must load after its WebAssembly runtime, so the editor module is loaded lazily on web |
+| S05 | Sticker sheet | 2026-11-18 | done | Gear tab says "coming soon" | 20 preview canvases exhausted the browser's WebGL contexts; now one canvas for the grid |
+| S06 | Sticker copy page | 2026-11-18 | done | | |
+| S07 | Totals | 2026-11-18 | done | | local-date bucketing so a late-evening run stays in its own day and week |
 | S08 | Gear | | not started | milestone 4 | |
 | — | Settings | 2026-11-18 | done | | |
 
@@ -51,3 +51,19 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
 - Strava sign-in round trip (callback domain `localhost`) and token function.
 - Instagram hand-off with a real Meta app id.
 - Everything in the milestone 1 "not verified yet" list.
+
+## Milestone 3 (2026-11-18)
+
+- Totals stickers (week, week days, week in numbers, month, year), same
+  sport family, by local date.
+- Free text sticker; layers list (select, reorder, delete).
+- S06 sticker copy page: tap copies a transparent 2x PNG, hold saves.
+- Apple Health background delivery: workouts arrive without opening the app.
+- 76 tests. Browser: text, totals, layers, clipboard PNG (1800x840,
+  transparent), long-press save, milestone 1 regression. Background
+  delivery entitlement confirmed in the generated iOS project.
+
+### Still needs an iPhone
+
+- Background delivery actually waking the app after a Watch workout.
+- Clipboard paste into Instagram (iOS pasteboard image).
