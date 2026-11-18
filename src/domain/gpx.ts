@@ -1,12 +1,9 @@
+import { ImportError, type ParsedTrack } from './track';
 import type { ActivityType, TrackPoint } from './types';
 
-export type ParsedTrack = {
-  name?: string;
-  type?: ActivityType;
-  points: TrackPoint[];
-};
-
-export class GpxError extends Error {}
+export type { ParsedTrack };
+/** @deprecated use ImportError */
+export const GpxError = ImportError;
 
 /**
  * Parse a GPX 1.0/1.1 file. React Native has no DOMParser, and GPX is regular
@@ -15,7 +12,7 @@ export class GpxError extends Error {}
  * from Garmin/Polar/Coros extensions (any namespace prefix ending in "hr").
  */
 export function parseGpx(xml: string): ParsedTrack {
-  if (!/<gpx[\s>]/i.test(xml)) throw new GpxError('This file is not a GPX file.');
+  if (!/<gpx[\s>]/i.test(xml)) throw new ImportError('This file is not a GPX file.');
 
   const trk = firstBlock(xml, 'trk');
   const name = text(trk ?? xml, 'name');
@@ -23,7 +20,7 @@ export function parseGpx(xml: string): ParsedTrack {
 
   let points = scanPoints(xml, 'trkpt');
   if (points.length === 0) points = scanPoints(xml, 'rtept');
-  if (points.length === 0) throw new GpxError('This GPX file has no track points.');
+  if (points.length === 0) throw new ImportError('This GPX file has no track points.');
 
   // Some exporters write points out of order; time order is what stats need.
   if (points.every((p) => p.time != null)) points.sort((a, b) => a.time! - b.time!);

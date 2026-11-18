@@ -36,7 +36,7 @@ export default function ActivitiesScreen() {
           <EmptyState
             icon={FileUp}
             title="Bring in your first workout"
-            body="Open a GPX file from your watch or app, or type one in. Apple Health and Strava sync are coming next."
+            body="Open a GPX, TCX or FIT file from your watch or app, or type one in."
             actions={<AddButtons add={add} />}
           />
         </View>
@@ -68,7 +68,7 @@ function useAddActions(units: Units, done: () => void) {
     async importFile() {
       setImporting(true);
       try {
-        const results = await pickAndImport(store, units);
+        const results = await pickAndImport(store);
         if (!results) return;
         done();
         const [only] = results;
@@ -95,7 +95,7 @@ function useAddActions(units: Units, done: () => void) {
 function AddButtons({ add }: { add: ReturnType<typeof useAddActions> }) {
   return (
     <>
-      <Button label="Import a GPX file" icon={FileUp} fullWidth loading={add.importing} onPress={add.importFile} />
+      <Button label="Import a GPX, TCX or FIT file" icon={FileUp} fullWidth loading={add.importing} onPress={add.importFile} />
       <Button label="Add one by hand" icon={PenLine} variant="secondary" fullWidth onPress={add.manual} />
       <Button label="Apple Health (coming soon)" icon={HeartPulse} variant="ghost" fullWidth disabled />
     </>

@@ -1,50 +1,77 @@
+import { parseFit } from './fit';
 import { defaultTitle } from './format';
 import { encodePolyline, simplify } from './geo';
 import { parseGpx } from './gpx';
 import { computeSplits, computeStats } from './stats';
-import type { ActivityType, NewActivity, Units } from './types';
+import { parseTcx } from './tcx';
+import { ImportError, type ParsedTrack } from './track';
+import type { ActivityType, NewActivity, Source, Units } from './types';
 
 /** Route stored at ~5 m tolerance: plenty for a story graphic, a few KB at most. */
 const ROUTE_TOLERANCE_M = 5;
 
+type BuildOpts = {
+  fileHash?: string | null;
+  externalId?: string | null;
+  /** the device's UTC offset at a moment; used when the file doesn't record its own */
+  utcOffsetMin?: (startedAt: number) => number;
+};
+
 /**
- * Turn a GPX file into an activity ready to save.
- * `utcOffsetMin` defaults to the device's offset at the activity's start time,
- * since GPX times are UTC and carry no zone.
+ * Turn any parsed track (GPX, TCX, FIT, Apple Health, Strava streams) into an
+ * activity ready to save. Device totals win over values recomputed from points.
  */
-export function activityFromGpx(
-  xml: string,
-  opts: { fileHash: string; units: Units; utcOffsetMin?: (startedAt: number) => number },
-): NewActivity {
-  const track = parseGpx(xml);
-  const stats = computeStats(track.points);
-  const startedAt = stats.startedAt ?? Date.now();
-  const offset = opts.utcOffsetMin
-    ? opts.utcOffsetMin(startedAt)
-    : -new Date(startedAt).getTimezoneOffset();
+export function activityFromTrack(track: ParsedTrack, source: Source, opts: BuildOpts = {}): NewActivity {
+  const timed = track.points.filter((p) => p.time != null);
+  const stats = computeStats(timed.length >= 2 ? timed : track.points);
+  const sum = track.summary ?? {};
+  const startedAt = track.startedAt ?? stats.startedAt;
+  if (startedAt == null) throw new ImportError('This file has no start time.');
+  const offset =
+    track.utcOffsetMin ?? (opts.utcOffsetMin ? opts.utcOffsetMin(startedAt) : -new Date(startedAt).getTimezoneOffset());
   const type: ActivityType = track.type ?? 'run';
   const route = simplify(track.points, ROUTE_TOLERANCE_M);
+  const distanceM = sum.distanceM ?? (track.points.length >= 2 ? stats.distanceM : null);
 
   return {
-    source: 'gpx',
-    externalId: null,
-    fileHash: opts.fileHash,
+    source,
+    externalId: opts.externalId ?? null,
+    fileHash: opts.fileHash ?? null,
     type,
     title: track.name?.slice(0, 120) || defaultTitle(type, startedAt, offset),
     locationName: null,
     startedAt,
     utcOffsetMin: offset,
-    distanceM: stats.distanceM,
-    movingTimeS: stats.movingTimeS ?? stats.elapsedTimeS ?? null,
-    elapsedTimeS: stats.elapsedTimeS ?? null,
-    elevationGainM: stats.elevationGainM ?? null,
-    avgHr: stats.avgHr ?? null,
-    maxHr: stats.maxHr ?? null,
-    calories: null,
+    distanceM,
+    movingTimeS: sum.movingTimeS ?? stats.movingTimeS ?? sum.elapsedTimeS ?? stats.elapsedTimeS ?? null,
+    elapsedTimeS: sum.elapsedTimeS ?? stats.elapsedTimeS ?? null,
+    elevationGainM: sum.elevationGainM ?? stats.elevationGainM ?? null,
+    avgHr: sum.avgHr ?? stats.avgHr ?? null,
+    maxHr: sum.maxHr ?? stats.maxHr ?? null,
+    calories: sum.calories ?? null,
     // splits in both units so switching units later doesn't need the raw track
-    splits: [...computeSplits(track.points, 'mi'), ...computeSplits(track.points, 'km')],
+    splits: timed.length >= 2 ? [...computeSplits(timed, 'mi'), ...computeSplits(timed, 'km')] : [],
     routePolyline: route.length >= 2 ? encodePolyline(route) : null,
   };
+}
+
+/** GPX times are UTC with no zone, so the device's offset at the start time is used. */
+export function activityFromGpx(
+  xml: string,
+  opts: { fileHash: string; units?: Units; utcOffsetMin?: (startedAt: number) => number },
+): NewActivity {
+  return activityFromTrack(parseGpx(xml), 'gpx', opts);
+}
+
+export function activityFromTcx(xml: string, opts: { fileHash: string; utcOffsetMin?: (startedAt: number) => number }): NewActivity {
+  return activityFromTrack(parseTcx(xml), 'tcx', opts);
+}
+
+export async function activityFromFit(
+  bytes: ArrayBuffer,
+  opts: { fileHash: string; utcOffsetMin?: (startedAt: number) => number },
+): Promise<NewActivity> {
+  return activityFromTrack(await parseFit(bytes), 'fit', opts);
 }
 
 export type ManualInput = {
