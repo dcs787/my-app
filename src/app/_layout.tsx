@@ -53,20 +53,23 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider value={navTheme}>
           <StoreProvider>
-          <ToastProvider>
-            <StatusBar style="light" />
-            <Stack
-              screenOptions={{
-                headerStyle: { backgroundColor: colors.bg },
-                headerTintColor: colors.text,
-                headerTitleStyle: { fontFamily: fontFamily('600') },
-                contentStyle: { backgroundColor: colors.bg },
-                headerShadowVisible: false,
-              }}>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="design" options={{ title: 'Design system' }} />
-            </Stack>
-          </ToastProvider>
+            <ToastProvider>
+              <StatusBar style="light" />
+              <Stack
+                screenOptions={{
+                  headerStyle: { backgroundColor: colors.bg },
+                  headerTintColor: colors.text,
+                  headerTitleStyle: { fontFamily: fontFamily('600') },
+                  contentStyle: { backgroundColor: colors.bg },
+                  headerShadowVisible: false,
+                }}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="activities/new" options={{ title: 'Add an activity', presentation: 'modal' }} />
+                <Stack.Screen name="activities/[id]" options={{ title: 'Activity' }} />
+                <Stack.Screen name="edit/[activityId]" options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="design" options={{ title: 'Design system' }} />
+              </Stack>
+            </ToastProvider>
           </StoreProvider>
         </ThemeProvider>
       </SafeAreaProvider>

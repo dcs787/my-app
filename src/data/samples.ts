@@ -99,7 +99,10 @@ function loop(o: { start: number; km: number; paceS: number; hills: number; seed
   for (let i = 1; i < pts.length; i++) {
     const dx = (pts[i].lon - pts[i - 1].lon) * mPerDegLon;
     const dy = (pts[i].lat - pts[i - 1].lat) * mPerDegLat;
-    tMs += (Math.hypot(dx, dy) / 1000) * o.paceS * 1000;
+    // pace drifts +/-6% (slower uphill, faster down) so splits look like a real effort
+    const climb = (pts[i].ele ?? 0) - (pts[i - 1].ele ?? 0);
+    const drift = 1 + 0.04 * Math.sin((i / pts.length) * 9 + o.seed) + Math.max(-0.02, Math.min(0.02, climb * 0.05));
+    tMs += (Math.hypot(dx, dy) / 1000) * o.paceS * drift * 1000;
     pts[i].time = Math.round(tMs);
   }
   return pts;
