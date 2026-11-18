@@ -88,6 +88,12 @@ export function formatDay(a: Pick<Activity, 'startedAt' | 'utcOffsetMin'>, now =
 
 export const weekdayName = (a: Pick<Activity, 'startedAt' | 'utcOffsetMin'>) => DAYS_LONG[localDate(a).getUTCDay()];
 
+/** "Nov 18, 2026" */
+export function formatLongDate(a: Pick<Activity, 'startedAt' | 'utcOffsetMin'>): string {
+  const d = localDate(a);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
 export const SOURCE_LABEL = {
   apple_health: 'Apple Health',
   strava: 'Strava',

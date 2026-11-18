@@ -26,10 +26,10 @@ import { canShareToInstagram, shareToInstagramStory } from './instagram';
 import { FONT_NAMES, TemplateFontsProvider, useTemplateFonts, type TemplateFonts } from './fonts';
 import { pickBackgroundPhoto } from './pickPhoto';
 import { Scene } from './Scene';
-import { TemplatePreview } from './TemplatePreview';
-import { TEMPLATES, unavailableReason } from './templates';
+import { TemplateGrid } from './TemplatePreview';
+import { TEMPLATES } from './templates';
 import { colors, radius } from '@/theme';
-import { Button, EmptyState, IconButton, SegmentedTabs, Sheet, Swatches, TemplateTile, Text, useToast } from '@/ui';
+import { Button, EmptyState, IconButton, SegmentedTabs, Sheet, Swatches, Text, useToast } from '@/ui';
 
 type Draft = Omit<Composition, 'createdAt' | 'updatedAt'>;
 
@@ -361,7 +361,7 @@ function TemplateSheet({
 }) {
   const [tab, setTab] = useState<'activity' | 'totals' | 'gear'>('activity');
   const { width } = useWindowDimensions();
-  const tile = Math.floor((Math.min(width, 560) - 16 * 2 - 10) / 2) - 24;
+  const gridWidth = Math.min(width, 560) - 16 * 2;
   const list = useMemo(() => TEMPLATES.filter((t) => t.category === tab), [tab]);
 
   return (
@@ -382,19 +382,7 @@ function TemplateSheet({
         <EmptyState icon={Plus} title="Coming soon" body={tab === 'totals' ? 'Weekly and monthly totals arrive in the next update.' : 'Gear stickers for your shoes and bikes are on the way.'} />
       ) : (
         <ScrollView contentContainerStyle={styles.tileGrid}>
-          {list.map((t) => {
-            const reason = unavailableReason(t, activity);
-            return (
-              <View key={t.id} style={{ width: '48%' }}>
-                <TemplateTile label={t.name} unavailableReason={reason ?? undefined} onPress={() => onPick(t.id)}>
-                  <TemplatePreview template={t} activity={activity} units={units} fonts={fonts[style.font]} colour={colors.text} size={tile} />
-                </TemplateTile>
-                <Text variant="caption" color="textMuted" align="center" style={{ marginTop: 4 }}>
-                  {t.name}
-                </Text>
-              </View>
-            );
-          })}
+          <TemplateGrid templates={list} activity={activity} units={units} fonts={fonts[style.font]} width={gridWidth} onPick={onPick} />
         </ScrollView>
       )}
     </Sheet>
@@ -411,5 +399,5 @@ const styles = StyleSheet.create({
   bottomBar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, height: 72 },
   bgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   bgSwatch: { width: 64, height: 112, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
-  tileGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 16, padding: 16 },
+  tileGrid: { padding: 16, alignItems: 'center' },
 });
