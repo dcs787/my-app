@@ -1,13 +1,14 @@
 import { router, Stack } from 'expo-router';
-import { FileUp, HeartPulse, PenLine, Plus } from 'lucide-react-native';
-import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { Activity as StravaIcon, FileUp, HeartPulse, PenLine, Plus } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { activityIcon } from '@/components/activityIcon';
 import { useActivities, useSettings, useStore } from '@/data';
 import { formatDistance, formatDuration, formatDay, SOURCE_LABEL, unitLabel } from '@/domain/format';
 import type { Activity, Units } from '@/domain/types';
 import { pickAndImport, summarise } from '@/features/importFiles';
+import { describeSync, syncAll, syncErrorMessage, useHealth, useStrava } from '@/features/sources';
 import { colors, radius } from '@/theme';
 import { Button, EmptyState, IconButton, ListRow, Sheet, useToast } from '@/ui';
 
@@ -16,6 +17,38 @@ export default function ActivitiesScreen() {
   const { data: settings } = useSettings();
   const [addOpen, setAddOpen] = useState(false);
   const add = useAddActions(settings.units, () => setAddOpen(false));
+  const store = useStore();
+  const toast = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+  const anyConnected = settings.healthConnected || settings.stravaAthlete != null;
+
+  /** Sync every connected source; quiet syncs only speak up if something changed or failed. */
+  const runSync = useCallback(
+    async (quiet: boolean) => {
+      const { summary, errors } = await syncAll(store, settings);
+      if (errors.length) toast(errors[0]);
+      else if (!quiet || summary.added || summary.merged) toast(describeSync(summary));
+    },
+    [store, settings, toast],
+  );
+
+  async function refresh() {
+    setRefreshing(true);
+    try {
+      await runSync(false);
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  // sync quietly once when the app opens, if it's been a while
+  const autoSynced = useRef(false);
+  useEffect(() => {
+    if (autoSynced.current || !anyConnected) return;
+    autoSynced.current = true;
+    const last = Math.min(settings.healthSyncedAt ?? 0, settings.stravaSyncedAt ?? Infinity);
+    if (Date.now() - last > 15 * 60_000) runSync(true);
+  }, [anyConnected, settings, runSync]);
 
   return (
     <>
@@ -36,7 +69,7 @@ export default function ActivitiesScreen() {
           <EmptyState
             icon={FileUp}
             title="Bring in your first workout"
-            body="Open a GPX, TCX or FIT file from your watch or app, or type one in."
+            body="Sync from Apple Health or Strava, open a file from your watch, or type one in."
             actions={<AddButtons add={add} />}
           />
         </View>
@@ -47,6 +80,9 @@ export default function ActivitiesScreen() {
           renderItem={({ item }) => <ActivityRow activity={item} units={settings.units} />}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
           contentContainerStyle={{ paddingVertical: 8 }}
+          refreshControl={
+            anyConnected ? <RefreshControl refreshing={refreshing} onRefresh={() => refresh()} tintColor={colors.text} /> : undefined
+          }
         />
       )}
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Add an activity">
@@ -93,11 +129,45 @@ function useAddActions(units: Units, done: () => void) {
 }
 
 function AddButtons({ add }: { add: ReturnType<typeof useAddActions> }) {
+  const health = useHealth();
+  const strava = useStrava();
+  const toast = useToast();
+  const report = (e: unknown) => {
+    const msg = syncErrorMessage(e);
+    if (msg) toast(msg);
+  };
+  const showHealth = health.available && !health.connected;
+  const showStrava = strava.configured && !strava.connected;
   return (
     <>
-      <Button label="Import a GPX, TCX or FIT file" icon={FileUp} fullWidth loading={add.importing} onPress={add.importFile} />
-      <Button label="Add one by hand" icon={PenLine} variant="secondary" fullWidth onPress={add.manual} />
-      <Button label="Apple Health (coming soon)" icon={HeartPulse} variant="ghost" fullWidth disabled />
+      {showHealth && (
+        <Button
+          label="Connect Apple Health"
+          icon={HeartPulse}
+          fullWidth
+          loading={health.busy === 'connect'}
+          onPress={() => health.connect().then((r) => toast(describeSync(r)), report)}
+        />
+      )}
+      {showStrava && (
+        <Button
+          label="Connect to Strava"
+          icon={StravaIcon}
+          variant={showHealth ? 'secondary' : 'primary'}
+          fullWidth
+          loading={strava.busy === 'connect'}
+          onPress={() => strava.connect().then((r) => toast(describeSync(r)), report)}
+        />
+      )}
+      <Button
+        label="Import a GPX, TCX or FIT file"
+        icon={FileUp}
+        variant={showHealth || showStrava ? 'secondary' : 'primary'}
+        fullWidth
+        loading={add.importing}
+        onPress={add.importFile}
+      />
+      <Button label="Add one by hand" icon={PenLine} variant={showHealth || showStrava ? 'ghost' : 'secondary'} fullWidth onPress={add.manual} />
     </>
   );
 }

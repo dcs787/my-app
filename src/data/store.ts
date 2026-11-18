@@ -48,6 +48,8 @@ export interface Store {
   deleteActivity(id: string): Promise<void>;
   /** Remove everything that came from one source (e.g. after disconnecting Strava). Returns how many. */
   deleteBySource(source: Activity['source']): Promise<number>;
+  /** Remove activities a provider says were deleted (e.g. a workout deleted in Apple Health). */
+  deleteByExternalIds(source: Activity['source'], ids: string[]): Promise<number>;
 
   getComposition(id: string): Promise<Composition | null>;
   latestComposition(activityId: string): Promise<Composition | null>;

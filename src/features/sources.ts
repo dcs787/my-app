@@ -6,6 +6,8 @@ import { deauthorize, StravaAuthError, StravaRateLimitError, syncStrava } from '
 import { STRAVA, stravaConfigured } from '@/integrations/strava/config';
 import { signInWithStrava, StravaCancelled } from '@/integrations/strava/connect';
 import { stravaTokens } from '@/integrations/strava/tokens';
+import { fetchWorkouts, healthAvailable, requestHealthAccess, type HealthBatch } from '@/integrations/health/healthkit';
+import { mapHealthWorkout } from '@/integrations/health/map';
 
 /** Re-read a few days before the last sync: Strava filters by start time, and uploads can arrive late. */
 const STRAVA_OVERLAP_MS = 3 * 86_400_000;
@@ -19,6 +21,43 @@ export async function syncStravaNow(store: Store, settings: Settings): Promise<S
   const r = await syncStrava(store, stravaTokens, since / 1000);
   await store.setSettings({ stravaSyncedAt: Date.now() });
   return { added: r.added, merged: r.merged };
+}
+
+/** First Health sync looks back this far; after that the anchor fetches only what changed. */
+const HEALTH_BACKFILL_DAYS = 90;
+
+export async function syncHealthNow(
+  store: Store,
+  settings: Settings,
+  fetch: (anchor: string | null, since: Date) => Promise<HealthBatch> = fetchWorkouts,
+): Promise<SyncSummary> {
+  const batch = await fetch(settings.healthAnchor, new Date(Date.now() - HEALTH_BACKFILL_DAYS * 86_400_000));
+  const summary: SyncSummary = { added: 0, merged: 0 };
+  for (const w of batch.workouts) {
+    const r = await store.insertActivity(mapHealthWorkout(w));
+    if (r.merged) summary.merged++;
+    else if (!r.duplicate) summary.added++;
+  }
+  if (batch.deletedIds.length) await store.deleteByExternalIds('apple_health', batch.deletedIds);
+  await store.setSettings({ healthAnchor: batch.anchor, healthSyncedAt: Date.now() });
+  return summary;
+}
+
+/** Sync every connected source; used by pull-to-refresh. Errors per source are collected, not thrown. */
+export async function syncAll(store: Store, settings: Settings): Promise<{ summary: SyncSummary; errors: string[] }> {
+  const summary: SyncSummary = { added: 0, merged: 0 };
+  const errors: string[] = [];
+  const add = (s: SyncSummary) => {
+    summary.added += s.added;
+    summary.merged += s.merged;
+  };
+  if (settings.healthConnected && healthAvailable()) {
+    await syncHealthNow(store, settings).then(add, (e) => errors.push(syncErrorMessage(e)));
+  }
+  if (settings.stravaAthlete && stravaConfigured()) {
+    await syncStravaNow(store, settings).then(add, (e) => errors.push(syncErrorMessage(e)));
+  }
+  return { summary, errors: errors.filter(Boolean) };
 }
 
 /** A friendly sentence for a sync error. */
@@ -77,6 +116,36 @@ export function useStrava() {
         await store.setSettings({ stravaAthlete: null, stravaSyncedAt: null });
         return removed;
       }),
+  };
+}
+
+/** Apple Health connection state and actions for screens. */
+export function useHealth() {
+  const store = useStore();
+  const { data: settings } = useSettings();
+  const [busy, setBusy] = useState<'connect' | 'sync' | null>(null);
+  const run = async <T,>(kind: 'connect' | 'sync', fn: () => Promise<T>) => {
+    setBusy(kind);
+    try {
+      return await fn();
+    } finally {
+      setBusy(null);
+    }
+  };
+  return {
+    available: healthAvailable(),
+    connected: settings.healthConnected,
+    syncedAt: settings.healthSyncedAt,
+    busy,
+    connect: () =>
+      run('connect', async () => {
+        await requestHealthAccess();
+        await store.setSettings({ healthConnected: true, healthAnchor: null });
+        return syncHealthNow(store, { ...settings, healthAnchor: null });
+      }),
+    sync: () => run('sync', () => syncHealthNow(store, settings)),
+    /** Stops syncing. Imported workouts stay (they're the user's own data, on their phone). */
+    disconnect: () => store.setSettings({ healthConnected: false, healthAnchor: null, healthSyncedAt: null }),
   };
 }
 

@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
-import { Activity as ActivityIcon, FlaskConical, Link2, Palette, RefreshCw, Trash, Unlink } from 'lucide-react-native';
+import { Activity as ActivityIcon, FlaskConical, HeartPulse, Link2, Palette, RefreshCw, Trash, Unlink } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { confirm } from '@/components/confirm';
 import { SourceCard } from '@/components/SourceCard';
 import { sampleActivities, useSettings, useStore } from '@/data';
-import { describeSync, syncErrorMessage, timeAgo, useStrava } from '@/features/sources';
+import { describeSync, syncErrorMessage, timeAgo, useHealth, useStrava } from '@/features/sources';
 import { deauthorize } from '@/integrations/strava/client';
 import { stravaTokens } from '@/integrations/strava/tokens';
 import { Button, Chip, ListRow, Text, useToast } from '@/ui';
@@ -37,6 +37,7 @@ export default function SettingsScreen() {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
       <Section title="Connections">
+        <HealthCard />
         <StravaCard />
       </Section>
 
@@ -67,6 +68,52 @@ export default function SettingsScreen() {
         </View>
       )}
     </ScrollView>
+  );
+}
+
+function HealthCard() {
+  const health = useHealth();
+  const toast = useToast();
+  const report = (e: unknown) => {
+    const msg = syncErrorMessage(e);
+    if (msg) toast(msg);
+  };
+  if (!health.available) {
+    return (
+      <SourceCard
+        icon={HeartPulse}
+        name="Apple Health"
+        status="Needs the full app"
+        note="Apple Health works in the installed app, not in Expo Go or the browser."
+      />
+    );
+  }
+  if (!health.connected) {
+    return (
+      <SourceCard icon={HeartPulse} name="Apple Health" status="Not connected" note="Includes Apple Watch workouts. Read-only: nothing is written to Health.">
+        <Button
+          label="Connect Apple Health"
+          icon={Link2}
+          loading={health.busy === 'connect'}
+          onPress={() =>
+            health.connect().then((r) => toast(r.added || r.merged ? describeSync(r) : 'Connected. No workouts found yet; check Health permissions if that’s wrong.'), report)
+          }
+        />
+      </SourceCard>
+    );
+  }
+  return (
+    <SourceCard icon={HeartPulse} name="Apple Health" status={`Connected · synced ${timeAgo(health.syncedAt)}`}>
+      <Button
+        label="Sync now"
+        icon={RefreshCw}
+        variant="secondary"
+        size="sm"
+        loading={health.busy === 'sync'}
+        onPress={() => health.sync().then((r) => toast(describeSync(r)), report)}
+      />
+      <Button label="Stop syncing" icon={Unlink} variant="danger" size="sm" onPress={() => health.disconnect().then(() => toast('Apple Health sync stopped'))} />
+    </SourceCard>
   );
 }
 

@@ -257,6 +257,21 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
       if (r.changes) events.emit();
       return r.changes;
     },
+    async deleteByExternalIds(source, ids) {
+      if (!ids.length) return 0;
+      let changes = 0;
+      // chunks keep us under SQLite's bound-parameter limit
+      for (let i = 0; i < ids.length; i += 500) {
+        const chunk = ids.slice(i, i + 500);
+        const r = await db.runAsync(
+          `DELETE FROM activities WHERE source = ? AND external_id IN (${chunk.map(() => '?').join(',')})`,
+          [source, ...chunk],
+        );
+        changes += r.changes;
+      }
+      if (changes) events.emit();
+      return changes;
+    },
     getComposition,
     async latestComposition(activityId) {
       const r = await db.getFirstAsync<{ id: string }>(

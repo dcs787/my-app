@@ -55,6 +55,14 @@ export function createMemoryStore(newId: () => string, now: () => number = Date.
       if (gone.size) events.emit();
       return gone.size;
     },
+    async deleteByExternalIds(source, ids) {
+      const want = new Set(ids);
+      const gone = new Set(activities.filter((a) => a.source === source && a.externalId && want.has(a.externalId)).map((a) => a.id));
+      activities = activities.filter((a) => !gone.has(a.id));
+      compositions = compositions.filter((c) => !gone.has(c.activityId));
+      if (gone.size) events.emit();
+      return gone.size;
+    },
     async getComposition(id) {
       return compositions.find((c) => c.id === id) ?? null;
     },

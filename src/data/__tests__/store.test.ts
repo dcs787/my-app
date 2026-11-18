@@ -202,6 +202,15 @@ describe.each(makers)('%s store', (_name, make) => {
     expect(await store.getComposition('c1')).toBeNull();
   });
 
+  it('deletes activities a provider reports as deleted', async () => {
+    await store.insertActivity(sample({ source: 'apple_health', externalId: 'hk-1', fileHash: null, startedAt: 1 }));
+    await store.insertActivity(sample({ source: 'apple_health', externalId: 'hk-2', fileHash: null, startedAt: 10_000_000 }));
+    await store.insertActivity(sample({ source: 'strava', externalId: 'hk-1', fileHash: null, startedAt: 20_000_000 }));
+    expect(await store.deleteByExternalIds('apple_health', ['hk-1', 'nope'])).toBe(1);
+    expect(await store.deleteByExternalIds('apple_health', [])).toBe(0);
+    expect((await store.listActivities()).map((a) => a.externalId).sort()).toEqual(['hk-1', 'hk-2']); // the Strava one stays
+  });
+
   it('notifies subscribers on writes', async () => {
     const fn = jest.fn();
     const off = store.subscribe(fn);
