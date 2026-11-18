@@ -1,7 +1,7 @@
 import { sampleActivities } from '@/data/samples';
 import type { Activity } from '@/domain/types';
 
-import { addElement, bringToFront, defaultComposition, elementAt, removeElement, updateElement, MAX_SCALE } from '../compose';
+import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, updateElement, MAX_SCALE } from '../compose';
 import type { Shape } from '../shapes';
 import { statValues, TEMPLATES, unavailableReason } from '../templates';
 
@@ -103,6 +103,16 @@ describe('composition', () => {
     const big = addElement(c, 'stat-grid', id, style, treadmill).element!; // 510 tall: no gap that big
     expect(big.y).toBe(960);
     expect(addElement({ elements: [] }, 'big-distance', id, style, run).element!.y).toBe(960);
+  });
+
+  it('moves stickers up and down the stack, stopping at the ends', () => {
+    const c = defaultComposition(run, id);
+    const ids = c.elements.map((e) => e.id);
+    expect(moveElement(c, ids[0], 'up').elements.map((e) => e.id)).toEqual([ids[1], ids[0], ids[2]]);
+    expect(moveElement(c, ids[2], 'down').elements.map((e) => e.id)).toEqual([ids[0], ids[2], ids[1]]);
+    expect(moveElement(c, ids[2], 'up')).toBe(c);
+    expect(moveElement(c, ids[0], 'down')).toBe(c);
+    expect(moveElement(c, 'nope', 'up')).toBe(c);
   });
 
   it('hit-tests rotated and scaled elements, topmost first', () => {

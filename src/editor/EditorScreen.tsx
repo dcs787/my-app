@@ -1,7 +1,7 @@
 import { Canvas, Group, useImage } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Download, ImagePlus, Info, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Download, ImagePlus, Info, Layers, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
@@ -14,6 +14,7 @@ import type { Activity, Units } from '@/domain/types';
 import {
   addElement,
   bringToFront,
+  moveElement,
   clamp,
   DEFAULT_STYLE,
   defaultComposition,
@@ -27,6 +28,7 @@ import { canShareToInstagram, shareToInstagramStory } from './instagram';
 import { FONT_NAMES, TemplateFontsProvider, useTemplateFonts, type TemplateFonts } from './fonts';
 import { pickBackgroundPhoto } from './pickPhoto';
 import { Scene } from './Scene';
+import { LayersList } from './LayersList';
 import { TemplateGrid } from './TemplatePreview';
 import { TEMPLATES, TEXT_TEMPLATE_ID } from './templates';
 import { colors, motion, radius } from '@/theme';
@@ -89,7 +91,7 @@ function EditorLoader({ activityId }: { activityId: string }) {
   return <Editor activity={activity} units={settings.units} fonts={fonts} initial={draft} />;
 }
 
-type Panel = 'templates' | 'background' | 'colour' | 'text' | null;
+type Panel = 'templates' | 'background' | 'colour' | 'text' | 'layers' | null;
 
 function Editor({ activity, units, fonts, initial }: { activity: Activity; units: Units; fonts: TemplateFonts; initial: Draft }) {
   const store = useStore();
@@ -284,6 +286,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         <Text variant="sm" weight="600" numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
           {activity.title}
         </Text>
+        <IconButton icon={Layers} label="Layers" variant="solid" onPress={() => setPanel('layers')} />
         <IconButton icon={Info} label="Activity details" variant="solid" onPress={() => router.push({ pathname: '/activities/[id]', params: { id: activity.id } })} />
       </View>
 
@@ -383,6 +386,22 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
           />
           <Button label="Done" fullWidth onPress={finishText} />
         </View>
+      </Sheet>
+
+      <Sheet open={panel === 'layers'} onClose={() => setPanel(null)} title="Layers">
+        <LayersList
+          elements={doc.elements}
+          selectedId={selectedId}
+          onSelect={(id) => {
+            setSelectedId(id);
+            setPanel(null);
+          }}
+          onMove={(id, dir) => setDoc((d) => moveElement(d, id, dir))}
+          onDelete={(id) => {
+            setDoc((d) => removeElement(d, id));
+            if (id === selectedId) setSelectedId(null);
+          }}
+        />
       </Sheet>
 
       <Sheet open={panel === 'colour'} onClose={() => setPanel(null)} title="Sticker colour">

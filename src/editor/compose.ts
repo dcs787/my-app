@@ -102,6 +102,16 @@ export function removeElement<C extends Pick<Composition, 'elements'>>(c: C, id:
   return { ...c, elements: c.elements.filter((e) => e.id !== id) };
 }
 
+/** Move one step towards the front ('up') or the back ('down') of the stack. */
+export function moveElement<C extends Pick<Composition, 'elements'>>(c: C, id: string, dir: 'up' | 'down'): C {
+  const i = c.elements.findIndex((e) => e.id === id);
+  const j = dir === 'up' ? i + 1 : i - 1;
+  if (i < 0 || j < 0 || j >= c.elements.length) return c;
+  const next = [...c.elements];
+  [next[i], next[j]] = [next[j], next[i]];
+  return { ...c, elements: next };
+}
+
 export function bringToFront<C extends Pick<Composition, 'elements'>>(c: C, id: string): C {
   const e = c.elements.find((x) => x.id === id);
   return e ? { ...c, elements: [...c.elements.filter((x) => x.id !== id), e] } : c;
