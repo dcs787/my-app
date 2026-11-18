@@ -1,7 +1,7 @@
 import { Canvas, Group, useImage } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Download, ImagePlus, Info, Palette, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Download, ImagePlus, Info, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
@@ -28,9 +28,9 @@ import { FONT_NAMES, TemplateFontsProvider, useTemplateFonts, type TemplateFonts
 import { pickBackgroundPhoto } from './pickPhoto';
 import { Scene } from './Scene';
 import { TemplateGrid } from './TemplatePreview';
-import { TEMPLATES } from './templates';
-import { colors, radius } from '@/theme';
-import { Button, EmptyState, IconButton, SegmentedTabs, Sheet, Swatches, Text, useToast } from '@/ui';
+import { TEMPLATES, TEXT_TEMPLATE_ID } from './templates';
+import { colors, motion, radius } from '@/theme';
+import { Button, Chip, EmptyState, IconButton, SegmentedTabs, Sheet, Swatches, Text, TextField, useToast } from '@/ui';
 
 type Draft = Omit<Composition, 'createdAt' | 'updatedAt'>;
 
@@ -89,7 +89,7 @@ function EditorLoader({ activityId }: { activityId: string }) {
   return <Editor activity={activity} units={settings.units} fonts={fonts} initial={draft} />;
 }
 
-type Panel = 'templates' | 'background' | 'colour' | null;
+type Panel = 'templates' | 'background' | 'colour' | 'text' | null;
 
 function Editor({ activity, units, fonts, initial }: { activity: Activity; units: Units; fonts: TemplateFonts; initial: Draft }) {
   const store = useStore();
@@ -98,6 +98,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
   const [doc, setDoc] = useState<Draft>(initial);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
+  const [draftText, setDraftText] = useState('');
   const [busy, setBusy] = useState<'save' | 'share' | 'instagram' | null>(null);
   const [instagram, setInstagram] = useState(false);
   useEffect(() => {
@@ -191,6 +192,36 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     setPanel(null);
   }
 
+  /** Add an empty text sticker and open the keyboard for it. */
+  function addText() {
+    const r = addElement(doc, TEXT_TEMPLATE_ID, randomUUID, style, activity);
+    if (!r.element) return;
+    setDoc(r.composition);
+    setSelectedId(r.element.id);
+    setDraftText('');
+    // iOS shows one modal at a time: let the sticker sheet finish closing first
+    setPanel(null);
+    setTimeout(() => setPanel('text'), motion.sheet + 50);
+  }
+
+  function editText() {
+    if (!selected) return;
+    setDraftText(selected.text ?? '');
+    setPanel('text');
+  }
+
+  function finishText() {
+    if (!selected) return setPanel(null);
+    const words = draftText.trim().slice(0, 80);
+    if (words) setDoc((d) => updateElement(d, selected.id, { text: words }));
+    else if (!selected.text) {
+      // left empty on a new sticker: don't keep a placeholder around
+      setDoc((d) => removeElement(d, selected.id));
+      setSelectedId(null);
+    }
+    setPanel(null);
+  }
+
   function cycleFont() {
     if (!selected) return;
     const next = FONT_IDS[(FONT_IDS.indexOf(selected.font) + 1) % FONT_IDS.length];
@@ -274,6 +305,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         )}
         {selected && (
           <View style={styles.rail}>
+            {selected.templateId === TEXT_TEMPLATE_ID && <IconButton icon={PenLine} label="Edit text" onPress={editText} />}
             <IconButton icon={Type} label={`Font: ${FONT_NAMES[selected.font]}. Change font`} onPress={cycleFont} />
             <IconButton icon={Palette} label="Colour" onPress={() => setPanel('colour')} />
             <IconButton
@@ -311,7 +343,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         )}
       </View>
 
-      <TemplateSheet open={panel === 'templates'} onClose={() => setPanel(null)} onPick={add} activity={activity} units={units} fonts={fonts} style={style} totals={totals} />
+      <TemplateSheet open={panel === 'templates'} onClose={() => setPanel(null)} onPick={add} onAddText={addText} activity={activity} units={units} fonts={fonts} style={style} totals={totals} />
 
       <Sheet open={panel === 'background'} onClose={() => setPanel(null)} title="Background">
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, gap: 16 }}>
@@ -336,6 +368,23 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         </ScrollView>
       </Sheet>
 
+      <Sheet open={panel === 'text'} onClose={finishText} title="Text">
+        <View style={{ paddingHorizontal: 16, gap: 12 }}>
+          <TextField
+            label="Your words"
+            value={draftText}
+            onChangeText={setDraftText}
+            placeholder="New PR, done before breakfast"
+            autoFocus
+            maxLength={80}
+            returnKeyType="done"
+            onSubmitEditing={finishText}
+            helper="Up to 80 characters. Long text shrinks to fit."
+          />
+          <Button label="Done" fullWidth onPress={finishText} />
+        </View>
+      </Sheet>
+
       <Sheet open={panel === 'colour'} onClose={() => setPanel(null)} title="Sticker colour">
         <Swatches value={selected?.colour ?? '#FFFFFF'} onChange={setColour} />
       </Sheet>
@@ -356,6 +405,7 @@ function TemplateSheet({
   open,
   onClose,
   onPick,
+  onAddText,
   activity,
   units,
   fonts,
@@ -365,6 +415,7 @@ function TemplateSheet({
   open: boolean;
   onClose: () => void;
   onPick: (id: string) => void;
+  onAddText: () => void;
   activity: Activity;
   units: Units;
   fonts: TemplateFonts;
@@ -378,7 +429,10 @@ function TemplateSheet({
 
   return (
     <Sheet open={open} onClose={onClose} title="Add a sticker" size="full">
-      <View style={{ paddingHorizontal: 16 }}>
+      <View style={{ paddingHorizontal: 16, gap: 8 }}>
+        <View style={{ flexDirection: 'row' }}>
+          <Chip label="Text" icon={Type} onPress={onAddText} />
+        </View>
         <SegmentedTabs
           accessibilityLabel="Sticker type"
           items={[

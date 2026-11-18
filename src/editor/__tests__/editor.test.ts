@@ -54,6 +54,13 @@ describe('templates', () => {
     }
   });
 
+  it('draws the free text sticker with its words, or a placeholder', () => {
+    const t = TEMPLATES.find((x) => x.id === 'text')!;
+    const [shape] = t.render({ activity: run, units: 'mi', text: '  First sub-20 5K  ' });
+    expect(shape).toMatchObject({ kind: 'text', text: 'First sub-20 5K', maxWidth: 940 });
+    expect(t.render({ activity: run, units: 'mi' })[0]).toMatchObject({ text: 'Your words' });
+  });
+
   it('explains why a template is unavailable', () => {
     const route = TEMPLATES.find((t) => t.id === 'route')!;
     expect(unavailableReason(route, treadmill)).toBe('No route');

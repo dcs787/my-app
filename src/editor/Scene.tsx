@@ -99,7 +99,7 @@ function ElementView({
 }) {
   const t = templateById(el.templateId);
   if (!t) return null;
-  const shapes = t.render({ activity, units, totals });
+  const shapes = t.render({ activity, units, totals, text: el.text });
   return (
     <Group
       transform={[

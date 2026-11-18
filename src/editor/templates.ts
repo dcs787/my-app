@@ -21,13 +21,16 @@ export type TemplateInput = {
   units: Units;
   /** totals for the periods containing this activity; computed from the activity alone if absent */
   totals?: Record<Period, Totals>;
+  /** the words, for the free text sticker */
+  text?: string;
 };
 export type Need = 'route' | 'splits' | 'distance' | 'time' | 'hr' | 'climb' | 'calories';
 
 export type TemplateDef = {
   id: string;
   name: string;
-  category: 'activity' | 'totals' | 'gear';
+  /** 'text' is added from its own button, not the grid */
+  category: 'activity' | 'totals' | 'gear' | 'text';
   needs?: Need[];
   /** natural size in canvas px (canvas is 1080 x 1920) */
   size: { w: number; h: number };
@@ -522,5 +525,18 @@ export const TEMPLATES: TemplateDef[] = [
     },
   },
 ];
+
+/** Free text: one line, shrinks to fit. Its id is used by the editor's "Add text". */
+export const TEXT_TEMPLATE_ID = 'text';
+export const TEXT_PLACEHOLDER = 'Your words';
+TEMPLATES.push({
+  id: TEXT_TEMPLATE_ID,
+  name: 'Text',
+  category: 'text',
+  size: { w: 960, h: 180 },
+  render({ text }) {
+    return [{ kind: 'text', text: text?.trim() || TEXT_PLACEHOLDER, x: 480, y: 130, size: 120, face: 'value', align: 'center', maxWidth: 940 }];
+  },
+});
 
 export const templateById = (id: string) => TEMPLATES.find((t) => t.id === id);
