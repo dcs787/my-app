@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { Activity as ActivityIcon, FlaskConical, HeartPulse, Link2, Palette, RefreshCw, Trash, Unlink } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -61,6 +62,10 @@ export default function SettingsScreen() {
         </Text>
         <Button label="Delete all data" icon={Trash} variant="danger" onPress={wipe} />
       </Section>
+
+      <Text variant="caption" color="textMuted" align="center" style={{ marginTop: 32 }}>
+        Mileprint {Constants.expoConfig?.version ?? ''} · No account. Your runs stay on this phone.
+      </Text>
 
       {__DEV__ && (
         <View style={{ marginTop: 8 }}>

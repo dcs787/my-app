@@ -1,0 +1,6 @@
+{
+  "name": "Mileprint",
+  "avoid": ["Share Aura", "ShareAura", "Aura Movement", "Aura Runcam", "Aura Editor", "Aura Clipboard", "Aura Gear", "Aura"],
+  "domains": ["shareaura.app"],
+  "colors": ["#524de5", "#1f2bff", "#ff018f", "#de1e85"]
+}

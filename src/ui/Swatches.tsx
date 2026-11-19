@@ -4,21 +4,18 @@ import { colors, radius } from '@/theme';
 
 import { usePressable } from './usePressable';
 
-/**
- * Placeholder palette for text/sticker colours. replica-brand replaces the
- * hues; white and black stay.
- */
+/** Sticker colours: white and black first, then Mileprint teal and amber, then a few that read well on photos. */
 export const DEFAULT_SWATCHES = [
   { name: 'White', value: '#FFFFFF' },
   { name: 'Black', value: '#000000' },
-  { name: 'Stone', value: '#D6D3D1' },
-  { name: 'Volt', value: '#D9F99D' },
-  { name: 'Lime', value: '#84CC16' },
-  { name: 'Teal', value: '#2DD4BF' },
-  { name: 'Sky', value: '#7DD3FC' },
-  { name: 'Orange', value: '#FB923C' },
-  { name: 'Red', value: '#EF4444' },
-  { name: 'Gold', value: '#FACC15' },
+  { name: 'Mileprint teal', value: '#3EE0C5' },
+  { name: 'Amber', value: '#FFC24D' },
+  { name: 'Chalk', value: '#EDEBE6' },
+  { name: 'Lime', value: '#C5F25A' },
+  { name: 'Sky', value: '#8FD3FF' },
+  { name: 'Coral', value: '#FF7A6B' },
+  { name: 'Lilac', value: '#C9B6FF' },
+  { name: 'Stone', value: '#A8A29E' },
 ] as const;
 
 export type SwatchesProps = {

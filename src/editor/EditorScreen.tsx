@@ -271,7 +271,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         await shareStory(uri);
       }
     } catch (e) {
-      toast(e instanceof PhotosPermissionError ? e.message : kind === 'save' ? 'Couldn’t save the image' : 'Couldn’t share the image');
+      toast(e instanceof PhotosPermissionError ? e.message : kind === 'save' ? 'Couldn’t save. Try again.' : 'Couldn’t share. Try again.');
     } finally {
       setBusy(null);
     }
@@ -419,6 +419,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
 
 const BACKGROUNDS: { name: string; preview: string; value: Background }[] = [
   { name: 'Night', preview: '#151517', value: { kind: 'gradient', from: '#1C1C1F', to: '#0A0A0B' } },
+  { name: 'Tide', preview: '#0F3F39', value: { kind: 'gradient', from: '#145A51', to: '#061614' } },
   { name: 'Black', preview: '#000000', value: { kind: 'solid', colour: '#000000' } },
   { name: 'Chalk', preview: '#EDEBE6', value: { kind: 'solid', colour: '#EDEBE6' } },
   { name: 'Forest', preview: '#1F3B2D', value: { kind: 'gradient', from: '#2E5641', to: '#13241B' } },

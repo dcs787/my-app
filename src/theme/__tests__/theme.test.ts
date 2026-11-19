@@ -1,3 +1,4 @@
+import brand from '../../../replica/brand.json';
 import { fontFamily, tokens, typeStyle } from '..';
 
 describe('theme', () => {
@@ -11,8 +12,9 @@ describe('theme', () => {
     expect(typeStyle('title')).toEqual({ fontSize: 20, lineHeight: 25, fontFamily: 'Inter_600SemiBold' });
   });
 
-  it('never ships the original app brand colours', () => {
-    const banned = ['#524de5', '#1f2bff', '#ff018f', '#de1e85'];
+  it('never ships the reference app brand colours listed in replica/brand.json', () => {
+    const banned = brand.colors.map((c) => c.toLowerCase());
+    expect(banned.length).toBeGreaterThan(0);
     const ours = Object.values(tokens.colors).map((c) => c.toLowerCase());
     banned.forEach((c) => expect(ours).not.toContain(c));
   });

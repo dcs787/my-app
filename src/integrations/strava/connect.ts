@@ -11,7 +11,7 @@ maybeCompleteAuthSession();
  * Redirect back into the app after Strava sign-in. Its host is "localhost",
  * so the Strava app's Authorization Callback Domain is simply `localhost`.
  */
-export const stravaRedirectUri = () => makeRedirectUri({ scheme: 'myapp', path: 'localhost/strava' });
+export const stravaRedirectUri = () => makeRedirectUri({ scheme: 'mileprint', path: 'localhost/strava' });
 
 export class StravaCancelled extends Error {}
 

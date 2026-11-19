@@ -70,7 +70,7 @@ export default function ActivitiesScreen() {
         <View style={styles.center}>
           <EmptyState
             icon={FileUp}
-            title="Bring in your first workout"
+            title="Bring in a run to get started"
             body={emptyBody()}
             actions={<AddButtons add={add} />}
           />
@@ -99,7 +99,7 @@ export default function ActivitiesScreen() {
 function emptyBody(): string {
   const sources = [healthAvailable() && 'Apple Health', stravaConfigured() && 'Strava'].filter(Boolean);
   const sync = sources.length ? `Sync from ${sources.join(' or ')}, open` : 'Open';
-  return `${sync} a GPX, TCX or FIT file from your watch, or type one in.`;
+  return `${sync} a GPX, TCX or FIT file from your watch, or type one in. No account needed.`;
 }
 
 function useAddActions(units: Units, done: () => void) {

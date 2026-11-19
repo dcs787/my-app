@@ -1,10 +1,10 @@
-# my-app
+# Mileprint
 
 Turn your runs and rides into story-ready graphics. Sync from Apple Health or
 Strava (or open a GPX/TCX/FIT file), drop stat templates onto a photo, and share
 straight to Instagram Stories.
 
-Working name until branding. Native iPhone app built with Expo (React Native).
+No account, no feed, no waitlist: your runs stay on your phone. Native iPhone app built with Expo (React Native).
 
 ## Run it
 

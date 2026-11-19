@@ -28,7 +28,7 @@ npx eas-cli@latest init
 Needed for Apple Health and for installing your own build on your iPhone.
 
 1. Enrol at developer.apple.com/programs.
-2. In `app.json`, change `ios.bundleIdentifier` from `com.example.myapp` to
+2. In `app.json`, change `ios.bundleIdentifier` from `com.example.mileprint` to
    your own reverse-domain ID, e.g. `com.yourname.storyapp`. It can't be
    changed after the app is on the App Store.
 

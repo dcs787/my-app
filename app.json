@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "my-app",
-    "slug": "my-app",
+    "name": "Mileprint",
+    "slug": "mileprint",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "mileprint",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.example.myapp"
+      "bundleIdentifier": "com.example.mileprint"
     },
     "android": {
       "adaptiveIcon": {
@@ -31,7 +31,7 @@
         {
           "backgroundColor": "#0A0A0B",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 120
         }
       ],
       "expo-font",
