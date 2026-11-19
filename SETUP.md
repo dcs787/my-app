@@ -121,6 +121,13 @@ npx eas-cli@latest env:set --name EXPO_PUBLIC_STRAVA_TOKEN_URL --value https://Y
 npx eas-cli@latest env:set --name EXPO_PUBLIC_META_APP_ID --value YOUR_META_APP_ID --environment development --visibility plaintext
 ```
 
+Optionally, set where "Email us" in Help sends feedback (the button is hidden
+without it):
+
+```bash
+npx eas-cli@latest env:set --name EXPO_PUBLIC_SUPPORT_EMAIL --value YOUR_SUPPORT_EMAIL --environment development --visibility plaintext
+```
+
 Repeat with `--environment preview` and `--environment production` when you
 make those builds. For local development, copy `.env.example` to
 `.env.local` and fill in the same three values.

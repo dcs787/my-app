@@ -70,6 +70,7 @@ export default function RootLayout() {
                 <Stack.Screen name="activities/[id]" options={{ title: 'Activity' }} />
                 <Stack.Screen name="edit/[activityId]" options={{ headerShown: false, presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                 <Stack.Screen name="stickers/[activityId]" options={{ title: 'Copy stickers' }} />
+                <Stack.Screen name="help" options={{ title: 'Help' }} />
                 <Stack.Screen name="design" options={{ title: 'Design system' }} />
               </Stack>
             </ToastProvider>
