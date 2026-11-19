@@ -1,18 +1,18 @@
 import { router, Stack } from 'expo-router';
-import { Activity as StravaIcon, FileUp, HeartPulse, PenLine, Plus } from 'lucide-react-native';
+import { Activity as StravaIcon, FileUp, HeartPulse, PenLine, Plus, RefreshCw } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 
 import { activityIcon } from '@/components/activityIcon';
 import { useActivities, useSettings, useStore } from '@/data';
 import { formatDistance, formatDuration, formatDay, SOURCE_LABEL, unitLabel } from '@/domain/format';
 import type { Activity, Units } from '@/domain/types';
 import { pickAndImport, summarise } from '@/features/importFiles';
-import { describeSync, syncAll, syncErrorMessage, useHealth, useStrava } from '@/features/sources';
+import { describeSync, syncAll, syncErrorMessage, timeAgo, useHealth, useStrava } from '@/features/sources';
 import { healthAvailable } from '@/integrations/health/healthkit';
 import { stravaConfigured } from '@/integrations/strava/config';
 import { colors, radius } from '@/theme';
-import { Button, EmptyState, IconButton, ListRow, Sheet, useToast } from '@/ui';
+import { Button, EmptyState, IconButton, ListRow, Sheet, Text, useToast } from '@/ui';
 
 export default function ActivitiesScreen() {
   const { data: activities, loading } = useActivities();
@@ -22,14 +22,28 @@ export default function ActivitiesScreen() {
   const store = useStore();
   const toast = useToast();
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const anyConnected = settings.healthConnected || settings.stravaAthlete != null;
+  const lastSync = Math.max(settings.healthSyncedAt ?? 0, settings.stravaSyncedAt ?? 0) || null;
+  // re-render "Updated 3 min ago" once a minute
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60_000);
+    return () => clearInterval(id);
+  }, []);
 
   /** Sync every connected source; quiet syncs only speak up if something changed or failed. */
   const runSync = useCallback(
     async (quiet: boolean) => {
-      const { summary, errors } = await syncAll(store, settings);
-      if (errors.length) toast(errors[0]);
-      else if (!quiet || summary.added || summary.merged) toast(describeSync(summary));
+      setSyncing(true);
+      try {
+        const { summary, errors } = await syncAll(store, settings);
+        if (errors.length) toast(errors[0]);
+        else if (!quiet || summary.added || summary.merged) toast(describeSync(summary));
+      } finally {
+        setSyncing(false);
+      }
     },
     [store, settings, toast],
   );
@@ -49,7 +63,7 @@ export default function ActivitiesScreen() {
     if (autoSynced.current || !anyConnected) return;
     autoSynced.current = true;
     const last = Math.min(settings.healthSyncedAt ?? 0, settings.stravaSyncedAt ?? Infinity);
-    if (Date.now() - last > 15 * 60_000) runSync(true);
+    if (Date.now() - last > 15 * 60_000) setTimeout(() => runSync(true), 0);
   }, [anyConnected, settings, runSync]);
 
   return (
@@ -81,18 +95,98 @@ export default function ActivitiesScreen() {
           keyExtractor={(a) => a.id}
           renderItem={({ item }) => <ActivityRow activity={item} units={settings.units} />}
           ItemSeparatorComponent={() => <View style={styles.sep} />}
-          contentContainerStyle={{ paddingVertical: 8 }}
+          contentContainerStyle={{ paddingBottom: 8 }}
+          ListHeaderComponent={
+            anyConnected ? (
+              <SyncLine syncing={syncing || refreshing} lastSync={lastSync} onHelp={() => setHelpOpen(true)} />
+            ) : undefined
+          }
           refreshControl={
             anyConnected ? <RefreshControl refreshing={refreshing} onRefresh={() => refresh()} tintColor={colors.text} /> : undefined
           }
         />
       )}
+      <MissingWorkoutSheet
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        health={settings.healthConnected}
+        strava={settings.stravaAthlete != null}
+        onSync={() => {
+          setHelpOpen(false);
+          refresh();
+        }}
+        onImport={() => {
+          setHelpOpen(false);
+          add.importFile();
+        }}
+      />
       <Sheet open={addOpen} onClose={() => setAddOpen(false)} title="Add an activity">
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           <AddButtons add={add} />
         </View>
       </Sheet>
     </>
+  );
+}
+
+function SyncLine({ syncing, lastSync, onHelp }: { syncing: boolean; lastSync: number | null; onHelp: () => void }) {
+  return (
+    <View style={styles.syncLine} accessibilityLiveRegion="polite">
+      <Text variant="footnote" color="textMuted">
+        {syncing ? 'Syncing…' : lastSync ? `Updated ${timeAgo(lastSync)}` : 'Not synced yet'}
+      </Text>
+      <Pressable onPress={onHelp} accessibilityRole="button" hitSlop={10}>
+        <Text variant="footnote" weight="600" color="accent">
+          Missing a workout?
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+/** What to check when a just-finished workout isn't in the list yet. */
+function MissingWorkoutSheet({
+  open,
+  onClose,
+  health,
+  strava,
+  onSync,
+  onImport,
+}: {
+  open: boolean;
+  onClose: () => void;
+  health: boolean;
+  strava: boolean;
+  onSync: () => void;
+  onImport: () => void;
+}) {
+  const tips = [
+    ...(health
+      ? [
+          'Your watch app saves to Apple Health a minute or two after you stop. Give it a moment, then sync.',
+          'In the Health app: your profile picture → Apps → Mileprint. Allow Workouts, Workout Routes and Heart Rate.',
+        ]
+      : []),
+    ...(strava ? ['Check the activity has finished uploading to Strava. Mileprint reads it straight after.'] : []),
+    'Recorded on something else? Export a GPX, TCX or FIT file from its app and open it here.',
+  ];
+  return (
+    <Sheet open={open} onClose={onClose} title="Missing a workout?">
+      <View style={{ paddingHorizontal: 16, gap: 12 }}>
+        {tips.map((t) => (
+          <View key={t} style={{ flexDirection: 'row', gap: 10 }}>
+            <Text variant="sm" color="accent">
+              •
+            </Text>
+            <Text variant="sm" style={{ flex: 1 }}>
+              {t}
+            </Text>
+          </View>
+        ))}
+        <Button label="Sync now" icon={RefreshCw} fullWidth onPress={onSync} />
+        <Button label="Import a file instead" icon={FileUp} variant="secondary" fullWidth onPress={onImport} />
+      </View>
+    </Sheet>
   );
 }
 
@@ -213,6 +307,7 @@ function SkeletonList() {
 }
 
 const styles = StyleSheet.create({
+  syncLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 10, paddingBottom: 6 },
   center: { flex: 1, justifyContent: 'center' },
   sep: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 68 },
   skelRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 64 },
