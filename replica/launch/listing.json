@@ -1,0 +1,20 @@
+{
+  "avoid": [
+    "Share Aura",
+    "ShareAura",
+    "Aura Movement",
+    "Aura Runcam",
+    "Aura Editor",
+    "Aura Clipboard",
+    "Aura Gear",
+    "Aura"
+  ],
+  "app_store": {
+    "name": "Mileprint: Run Story Maker",
+    "subtitle": "No account. Just your run.",
+    "promotional_text": "Your run is ready when you stop: new workouts sync in the background from Apple Health. Pick a sticker, add a photo, post. No account, no watermark.",
+    "description": "Turn every run into a story worth posting. No account, no feed, no waitlist.\n\nMileprint reads your workouts and gives you a canvas: drop your distance, pace, route and splits onto a photo, pick a font and colour, and share it to Instagram Stories in seconds. Everything stays on your phone.\n\nYOUR RUN IS READY WHEN YOU STOP\n- Syncs from Apple Health, including Apple Watch and any watch app that saves to Health\n- Connects to Strava (Compatible with Strava)\n- Opens GPX, TCX and FIT files from any watch or app\n- New workouts arrive in the background, and the list shows when it last updated\n- The same run from two places shows up once\n\nMAKE IT LOOK LIKE YOU\n- 25 sticker designs: big distance, pace, route, splits, stat grids, week and month totals\n- Five type styles and a palette of colours\n- Drag, pinch and twist anything; add your own words\n- Your photo, a colour or a gradient behind it\n- Exports at full story size: what you see is what you post\n\nSHARE IT YOUR WAY\n- Straight to Instagram Stories\n- Save to Photos or use the share sheet\n- Copy a single sticker and paste it onto any photo or video\n\nYOURS, NOT OURS\n- No account and no sign-up\n- No watermark on anything you make\n- Your runs stay on your phone. Disconnect Strava and its activities are removed.\n- Route ends are trimmed so your story never shows where you live\n\nRuns, rides, walks, hikes, swims, skates, ski days, rows and climbs.\n\nQuestions or ideas? Settings > Help and feedback.",
+    "keywords": "running,stats,stickers,overlay,pace,splits,route,map,cycling,marathon,workout,share,gpx,fit,miles,km",
+    "whats_new": "First release. Tell us what to build next: Settings > Help and feedback."
+  }
+}
