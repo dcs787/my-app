@@ -1,0 +1,34 @@
+{
+  "_about": "Themes for a sport-sharing app (Share Aura reviews). Regexes, case-insensitive, matched against review text. Written for replica-entrepreneur's reviews.py.",
+  "request_patterns": [
+    "\\bi wish\\b", "\\bplease (add|support)\\b", "\\badd\\b.*\\bplease\\b", "\\bwould (be nice|be great|love)\\b",
+    "\\bneeds? (the ability|support|a |an |more)\\b", "\\bonly thing i wish\\b", "\\ballow\\b", "\\bwould suggest\\b",
+    "\\bquiero\\b", "\\ban update would\\b", "\\bnot (an )?option\\b"
+  ],
+  "themes": [
+    {"id": "sync", "label": "Sync is slow, stops, or misses the latest workout", "kind": "complaint", "patterns": [
+      "\\bsync", "\\brefresh", "\\b(most )?recent workouts?\\b", "\\bstopped (updating|syncing)\\b", "\\bdoesn.?t (upload|populate)\\b",
+      "\\bnothing populates\\b", "\\bwon.?t update\\b", "\\btakes forever\\b", "\\btoo slow\\b", "\\bdoesn.?t show (the )?most recent\\b",
+      "\\bno permite cargar\\b", "\\bdoesn.?t upload\\b", "\\bdon.?t show up\\b"]},
+    {"id": "sources", "label": "My watch or app isn't supported", "kind": "complaint", "patterns": [
+      "\\bnot compatible\\b", "\\bdoesn.?t connect\\b", "\\bamazfit\\b", "\\bhammerhead\\b", "\\bonly (works|good) for\\b",
+      "\\bandroid\\b", "\\bdata source is empty\\b", "\\bconnect(ed)? my coros\\b", "\\bconectarme\\b", "\\bnot option\\b"]},
+    {"id": "accuracy", "label": "Wrong numbers: splits, elevation, workout type, combined mileage", "kind": "complaint", "patterns": [
+      "\\bsplits? (are|is) (always )?wrong\\b", "\\binaccurate\\b", "\\bnot even close\\b", "\\belevation\\b", "\\bwrong workout type\\b",
+      "\\breading a workout as\\b", "\\bcombines\\b", "\\bover ?shoots\\b", "\\bduplicate workouts?\\b"]},
+    {"id": "stability", "label": "Crashes, freezes, lag", "kind": "complaint", "patterns": [
+      "\\bcrash", "\\bfreez", "\\bglitch", "\\bbugs?\\b", "\\bbuggy\\b", "\\blaggy\\b", "\\bjanky\\b", "\\bsluggish\\b", "\\bhangs\\b",
+      "\\bdoesn.?t work\\b", "\\bnot function\\b"]},
+    {"id": "access", "label": "Hard to get in: waitlist, sign-up, onboarding", "kind": "complaint", "patterns": [
+      "\\bwaitlist\\b", "\\baccess code\\b", "\\bsign ?up\\b", "\\bonboarding\\b", "\\busername\\b", "\\bquote on the screen\\b"]},
+    {"id": "support", "label": "No help or support", "kind": "complaint", "patterns": [
+      "\\bsupport of any kind\\b", "\\bcustomer support\\b", "\\bno faq\\b", "\\bfaq\\b", "\\bhelp section\\b", "\\bzero customer support\\b"]},
+    {"id": "watermark", "label": "Forced watermark", "kind": "complaint", "patterns": ["\\bwatermark\\b"]},
+    {"id": "customise", "label": "Can't choose which stats, fonts or text appear", "kind": "request", "patterns": [
+      "\\bcustomi[sz]", "\\bremove what you don.?t want\\b", "\\bmax hr\\b", "\\bedit the time\\b", "\\bfonts?\\b", "\\bserifs?\\b",
+      "\\bgeneric\\b", "\\bworkout name\\b"]},
+    {"id": "footprint", "label": "Big download, permission nags, layout doesn't fit", "kind": "complaint", "patterns": [
+      "\\b498mb\\b", "\\bhalf a gb\\b", "\\bshare all your pictures\\b", "\\bdoes not fit\\b", "\\bnewer phone\\b"]},
+    {"id": "sports", "label": "More sports", "kind": "request", "patterns": ["\\bother sports\\b", "\\bskating\\b", "\\blimited to gym/runs\\b"]}
+  ]
+}
