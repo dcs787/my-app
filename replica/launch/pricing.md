@@ -39,7 +39,7 @@ not by locking today's features. Candidates, in order:
 
 | tier | for | price | what's in it |
 | --- | --- | --- | --- |
-| **Free** | everyone who runs | $0 | everything in the app today: all sources, all 25 stickers and text, copy stickers, Instagram share, no watermark, no ads |
+| **Free** | everyone who runs | $0 | everything in the app today: all sources, all 26 stickers and text, copy stickers, Instagram share, no watermark, no ads |
 | **Plus** | people who post every week | **$2.99/month** or **$29.99/year** (2 months free) | the extras above as they ship |
 | **Plus for life** | people who hate subscriptions | **$59.99 once** | the same as Plus, forever |
 

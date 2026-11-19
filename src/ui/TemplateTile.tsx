@@ -28,7 +28,7 @@ export function TemplateTile({ label, children, onPress, unavailableReason, copi
         disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={disabled ? `${label}, unavailable: ${unavailableReason}` : label}
-        accessibilityState={{ disabled }}
+        aria-disabled={!!disabled}
         style={({ pressed }) => [styles.tile, stateStyle(pressed), disabled && { opacity: 0.35 }]}>
         {children}
         {copied && (

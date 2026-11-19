@@ -14,19 +14,24 @@ import {
   formatElevation,
   formatPace,
   formatSpeed,
+  hasLaps,
+  lapsNote,
   SOURCE_LABEL,
+  splitsNote,
   typeLabel,
   unitLabel,
   usesSpeed,
 } from '@/domain/format';
-import { ACTIVITY_TYPES, type Activity, type Units } from '@/domain/types';
+import { ACTIVITY_TYPES, type Activity, type Lap, type Split, type Units } from '@/domain/types';
+import { useStravaDetails } from '@/features/stravaDetails';
 import { colors, radius } from '@/theme';
-import { Button, Chip, EmptyState, StatBlock, Text, TextField, useToast } from '@/ui';
+import { Button, Chip, EmptyState, SegmentedTabs, StatBlock, Text, TextField, useToast } from '@/ui';
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: activity, loading } = useActivity(id);
   const { data: settings } = useSettings();
+  useStravaDetails(activity);
 
   if (loading) return null;
   if (!activity) {
@@ -50,6 +55,9 @@ function Detail({ activity: a, units }: { activity: Activity; units: Units }) {
 
   const speed = usesSpeed(a.type);
   const splits = a.splits.filter((s) => s.unit === units);
+  const laps = hasLaps(a) ? a.laps : [];
+  const [view, setView] = useState<'laps' | 'splits'>('laps');
+  const showing = laps.length && (view === 'laps' || !splits.length) ? 'laps' : 'splits';
 
   async function saveTitle() {
     const t = title.trim();
@@ -94,27 +102,29 @@ function Detail({ activity: a, units }: { activity: Activity; units: Units }) {
         ]}
       />
 
-      {splits.length > 0 && (
+      {(laps.length > 0 || splits.length > 0) && (
         <View style={{ gap: 6 }}>
-          <Text variant="footnote" color="textMuted" uppercase>
-            Splits
+          {laps.length > 0 && splits.length > 0 ? (
+            <SegmentedTabs
+              accessibilityLabel="Laps or splits"
+              items={[
+                { key: 'laps', label: `Laps (${laps.length})` },
+                { key: 'splits', label: 'Splits' },
+              ]}
+              value={showing}
+              onChange={setView}
+            />
+          ) : (
+            <Text variant="footnote" color="textMuted" uppercase>
+              {showing === 'laps' ? 'Laps' : 'Splits'}
+            </Text>
+          )}
+          {showing === 'laps'
+            ? laps.map((l) => <LapRow key={l.index} lap={l} units={units} speed={speed} />)
+            : splits.map((s) => <SplitRow key={s.index} split={s} units={units} speed={speed} />)}
+          <Text variant="footnote" color="textMuted">
+            {showing === 'laps' ? lapsNote(a) : splitsNote(a)}
           </Text>
-          {splits.map((s) => (
-            <View key={s.index} style={styles.split}>
-              <Text variant="sm" color="textMuted" style={{ width: 40 }}>
-                {s.distanceM < (units === 'mi' ? 1609 : 1000) ? `${formatDistance(s.distanceM, units)}` : s.index}
-              </Text>
-              <Text variant="sm" weight="600" style={{ flex: 1 }}>
-                {speed ? `${formatSpeed(s.distanceM, s.timeS, units)} ${unitLabel.speed(units)}` : `${formatPace(s.distanceM, s.timeS, units)} ${unitLabel.pace(units)}`}
-              </Text>
-              {s.elevationDeltaM != null && (
-                <Text variant="sm" color="textMuted">
-                  {s.elevationDeltaM >= 0 ? '+' : ''}
-                  {formatElevation(s.elevationDeltaM, units)} {unitLabel.elevation(units)}
-                </Text>
-              )}
-            </View>
-          ))}
         </View>
       )}
 
@@ -139,6 +149,46 @@ function Detail({ activity: a, units }: { activity: Activity; units: Units }) {
       />
       <Button label="Delete activity" icon={Trash} variant="danger" fullWidth onPress={remove} />
     </ScrollView>
+  );
+}
+
+const paceText = (distanceM: number, timeS: number, units: Units, speed: boolean) =>
+  speed ? `${formatSpeed(distanceM, timeS, units)} ${unitLabel.speed(units)}` : `${formatPace(distanceM, timeS, units)} ${unitLabel.pace(units)}`;
+
+function SplitRow({ split: s, units, speed }: { split: Split; units: Units; speed: boolean }) {
+  return (
+    <View style={styles.split}>
+      <Text variant="sm" color="textMuted" style={{ width: 40 }}>
+        {s.distanceM < (units === 'mi' ? 1609 : 1000) ? `${formatDistance(s.distanceM, units)}` : s.index}
+      </Text>
+      <Text variant="sm" weight="600" style={{ flex: 1 }}>
+        {paceText(s.distanceM, s.timeS, units, speed)}
+      </Text>
+      {s.elevationDeltaM != null && (
+        <Text variant="sm" color="textMuted">
+          {s.elevationDeltaM >= 0 ? '+' : ''}
+          {formatElevation(s.elevationDeltaM, units)} {unitLabel.elevation(units)}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+/** Lap number, pace, then the lap's own distance and time (laps vary in length). */
+function LapRow({ lap: l, units, speed }: { lap: Lap; units: Units; speed: boolean }) {
+  return (
+    <View style={styles.split} accessible accessibilityLabel={`Lap ${l.index}: ${formatDistance(l.distanceM, units)} ${unitLabel.distance(units)} in ${formatDuration(l.timeS)}`}>
+      <Text variant="sm" color="textMuted" style={{ width: 40 }}>
+        {l.index}
+      </Text>
+      <Text variant="sm" weight="600" style={{ flex: 1 }}>
+        {l.distanceM > 0 ? paceText(l.distanceM, l.timeS, units, speed) : formatDuration(l.timeS)}
+      </Text>
+      <Text variant="sm" color="textMuted" style={{ fontVariant: ['tabular-nums'] }}>
+        {l.distanceM > 0 ? `${formatDistance(l.distanceM, units)} ${unitLabel.distance(units)} · ` : ''}
+        {formatDuration(l.timeS)}
+      </Text>
+    </View>
   );
 }
 

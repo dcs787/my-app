@@ -27,7 +27,7 @@ export type TemplateInput = {
   /** stats the person chose for this sticker, in order */
   stats?: StatKey[];
 };
-export type Need = 'route' | 'splits' | 'distance' | 'time' | 'hr' | 'climb' | 'calories';
+export type Need = 'route' | 'splits' | 'laps' | 'distance' | 'time' | 'hr' | 'climb' | 'calories';
 
 export type TemplateDef = {
   id: string;
@@ -65,6 +65,7 @@ export function unavailableReason(t: TemplateDef, a: Activity): string | null {
   for (const n of t.needs ?? []) {
     if (n === 'route' && !a.routePolyline) return 'No route';
     if (n === 'splits' && a.splits.length < 2) return 'No splits';
+    if (n === 'laps' && a.laps.length < 2) return 'No laps';
     if (n === 'distance' && !a.distanceM) return 'No distance';
     if (n === 'time' && !a.movingTimeS) return 'No time';
     if (n === 'hr' && a.avgHr == null) return 'No heart rate';
@@ -145,6 +146,29 @@ function statCell(s: Cell, x: number, y: number, valueSize: number, width: numbe
       maxWidth,
     },
   ];
+}
+
+/** One bar per split or lap, longer when faster, with its pace or speed. Lap lengths vary, so pace is per unit. */
+function paceBars(rows: { index: number; distanceM: number; timeS: number }[], activity: Activity, units: Units): Shape[] {
+  const list = rows.filter((r) => r.distanceM > 0 && r.timeS > 0);
+  if (list.length < 2) return [];
+  const speed = usesSpeed(activity.type);
+  const perUnit = list.map((s) => s.timeS / (s.distanceM / (units === 'mi' ? 1609.344 : 1000)));
+  const fastest = Math.min(...perUnit);
+  const slowest = Math.max(...perUnit);
+  const rowH = 600 / list.length;
+  const barH = Math.min(36, rowH * 0.55);
+  return list.flatMap((s, i): Shape[] => {
+    const y = 20 + i * rowH;
+    const t = slowest === fastest ? 1 : 1 - (perUnit[i] - fastest) / (slowest - fastest);
+    const w = 220 + t * 360;
+    const label = speed ? formatSpeed(s.distanceM, s.timeS, units) : formatPace(s.distanceM, s.timeS, units);
+    return [
+      { kind: 'text', text: String(s.index), x: 0, y: y + barH * 0.8, size: barH * 0.9, face: 'label', opacity: 0.7 },
+      { kind: 'rect', x: 70, y, w, h: barH, r: barH / 2, opacity: 0.9 },
+      { kind: 'text', text: label ?? '', x: 70 + w + 20, y: y + barH * 0.8, size: barH * 0.95, face: 'value' },
+    ];
+  });
 }
 
 export const TEMPLATES: TemplateDef[] = [
@@ -241,29 +265,17 @@ export const TEMPLATES: TemplateDef[] = [
     needs: ['splits'],
     size: { w: 800, h: 640 },
     render({ activity, units }) {
-      const splits = activity.splits.filter((s) => s.unit === units).slice(0, 10);
-      if (splits.length < 2) return [];
-      const speed = usesSpeed(activity.type);
-      // seconds per unit, partial last split scaled up
-      const perUnit = splits.map((s) => s.timeS / (s.distanceM / (units === 'mi' ? 1609.344 : 1000)));
-      const fastest = Math.min(...perUnit);
-      const slowest = Math.max(...perUnit);
-      const rowH = 600 / splits.length;
-      const barH = Math.min(36, rowH * 0.55);
-      return splits.flatMap((s, i): Shape[] => {
-        const y = 20 + i * rowH;
-        // faster = longer bar
-        const t = slowest === fastest ? 1 : 1 - (perUnit[i] - fastest) / (slowest - fastest);
-        const w = 220 + t * 360;
-        const label = speed
-          ? formatSpeed(s.distanceM, s.timeS, units)
-          : formatPace(s.distanceM, s.timeS, units);
-        return [
-          { kind: 'text', text: String(s.index), x: 0, y: y + barH * 0.8, size: barH * 0.9, face: 'label', opacity: 0.7 },
-          { kind: 'rect', x: 70, y, w, h: barH, r: barH / 2, opacity: 0.9 },
-          { kind: 'text', text: label ?? '', x: 70 + w + 20, y: y + barH * 0.8, size: barH * 0.95, face: 'value' },
-        ];
-      });
+      return paceBars(activity.splits.filter((s) => s.unit === units).slice(0, 10), activity, units);
+    },
+  },
+  {
+    id: 'laps-bars',
+    name: 'Laps',
+    category: 'activity',
+    needs: ['laps'],
+    size: { w: 800, h: 640 },
+    render({ activity, units }) {
+      return paceBars(activity.laps.slice(0, 10), activity, units);
     },
   },
   // ---- single big numbers

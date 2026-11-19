@@ -1,7 +1,8 @@
 import { activityFromTrack } from '@/domain/import';
-import type { ActivityType, NewActivity } from '@/domain/types';
+import { cleanLaps } from '@/domain/stats';
+import type { ActivityType, Lap, NewActivity, Split, Units } from '@/domain/types';
 
-import type { StravaActivity } from './types';
+import type { StravaActivity, StravaDetailedActivity, StravaSplit } from './types';
 
 const SPORT: Record<string, ActivityType> = {
   Run: 'run',
@@ -70,4 +71,32 @@ export function mapStravaActivity(s: StravaActivity): NewActivity {
     { externalId: String(s.id) },
   );
   return { ...base, routePolyline: s.map?.summary_polyline || null };
+}
+
+/**
+ * Laps and Strava's own splits from an activity's details. Strava works its
+ * splits out from the full recording, so they replace splits from the
+ * summary (which has none).
+ */
+export function mapStravaDetails(d: StravaDetailedActivity): { laps: Lap[]; splits: Split[] } {
+  const laps = cleanLaps(
+    (d.laps ?? []).map((l, i) => ({
+      index: i + 1,
+      distanceM: l.distance ?? 0,
+      timeS: Math.round(l.moving_time ?? l.elapsed_time ?? 0),
+      ...(l.average_heartrate != null ? { avgHr: Math.round(l.average_heartrate) } : {}),
+      ...(l.total_elevation_gain != null ? { climbM: l.total_elevation_gain } : {}),
+    })),
+  );
+  const splits = (list: StravaSplit[] | undefined, unit: Units): Split[] =>
+    (list ?? [])
+      .filter((s) => s.distance > 0 && (s.moving_time ?? s.elapsed_time) > 0)
+      .map((s, i) => ({
+        unit,
+        index: i + 1,
+        distanceM: s.distance,
+        timeS: s.moving_time ?? s.elapsed_time,
+        ...(s.elevation_difference != null ? { elevationDeltaM: s.elevation_difference } : {}),
+      }));
+  return { laps, splits: [...splits(d.splits_standard, 'mi'), ...splits(d.splits_metric, 'km')] };
 }

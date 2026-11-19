@@ -1,4 +1,4 @@
-import type { ActivityType, TrackPoint } from './types';
+import type { ActivityType, Lap, TrackPoint } from './types';
 
 /** Totals a device recorded itself. Preferred over values recomputed from GPS points. */
 export type TrackSummary = {
@@ -22,6 +22,10 @@ export type ParsedTrack = {
   /** when the file records local time (FIT does) */
   utcOffsetMin?: number;
   summary?: TrackSummary;
+  /** laps with the device's own totals (FIT, TCX) */
+  laps?: Lap[];
+  /** lap start and end times only (Apple Health segments); timed from the points */
+  lapWindows?: { start: number; end: number }[];
 };
 
 /** A file we can't use, with a message fit to show the user. */

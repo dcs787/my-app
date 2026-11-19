@@ -39,7 +39,7 @@ Background sync of new Apple Health workouts,data,should,no,yes,HealthKit backgr
 "Sync status, last-updated time and missing-workout help",data,should,no,yes,list shows syncing / updated-ago; Missing a workout? sheet; background-sync toast
 In-app help and feedback,platform,should,no,yes,Help screen: 6 answers + Email us (EXPO_PUBLIC_SUPPORT_EMAIL)
 Choose which stats a sticker shows,templates,should,no,yes,fix 3 done: 7 stat stickers; tap order sets the order; max HR opt-in
-"Watch laps for splits (FIT laps, Strava laps)",data,should,no,no,fix 4: accuracy complaints (5+1)
+"Watch laps for splits (FIT laps, Strava laps)",data,should,no,yes,"fix 4 done: FIT/TCX laps, Strava laps and splits on open, Health segments; Laps sticker; says which"
 Editor speed budget and crash reporting,platform,should,no,no,fix 5: stability complaints (8)
 "Small download, never a forced watermark",platform,should,no,partial,no watermark anywhere; download size to measure on the first production build
 "More sport types (skate, ski, row, climb...)",data,could,no,yes,"skate, ski, row, climb from Health, Strava, files"

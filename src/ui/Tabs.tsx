@@ -56,7 +56,7 @@ function Tab({
     <Pressable
       {...pressableProps}
       accessibilityRole="tab"
-      accessibilityState={{ selected }}
+      aria-selected={selected}
       accessibilityLabel={label}
       style={({ pressed }) => [
         variant === 'underline' ? styles.underlineTab : styles.pillTab,

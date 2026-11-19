@@ -5,6 +5,7 @@ const act = (iso: string, over: Partial<Activity> = {}): Activity => ({
   id: iso,
   source: 'manual',
   type: 'run',
+  laps: [],
   title: 'x',
   startedAt: Date.parse(iso),
   utcOffsetMin: -420, // Denver

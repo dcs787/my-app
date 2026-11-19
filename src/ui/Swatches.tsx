@@ -47,7 +47,7 @@ function Swatch({ name, hex, selected, onPress }: { name: string; hex: string; s
       {...pressableProps}
       accessibilityRole="radio"
       accessibilityLabel={name}
-      accessibilityState={{ selected }}
+      aria-checked={selected}
       style={({ pressed }) => [styles.hit, stateStyle(pressed)]}>
       <View style={[styles.ring, selected && { borderColor: colors.accent }]}>
         <View style={[styles.dot, { backgroundColor: hex }]} />

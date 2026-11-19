@@ -10,7 +10,7 @@ import { createEmitter, DEFAULT_SETTINGS, type Settings, type Store } from './st
  * Local schema. Mirrors replica/schema.sql (minus server-only columns) so the
  * accounts milestone can upload rows as they are. Times are ms since epoch.
  */
-const MIGRATIONS: string[] = [
+export const MIGRATIONS: string[] = [
   `
   PRAGMA journal_mode = WAL;
   CREATE TABLE activities (
@@ -50,6 +50,11 @@ const MIGRATIONS: string[] = [
 
   CREATE TABLE settings (key TEXT PRIMARY KEY NOT NULL, value TEXT NOT NULL);
   `,
+  // v2: watch laps, and when provider details (Strava laps and splits) were fetched
+  `
+  ALTER TABLE activities ADD COLUMN laps TEXT NOT NULL DEFAULT '[]';
+  ALTER TABLE activities ADD COLUMN details_at INTEGER;
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -83,6 +88,8 @@ type ActivityRow = {
   max_hr: number | null;
   calories: number | null;
   splits: string;
+  laps: string;
+  details_at: number | null;
   route_polyline: string | null;
   created_at: number;
   updated_at: number;
@@ -106,6 +113,8 @@ const fromRow = (r: ActivityRow): Activity => ({
   maxHr: r.max_hr,
   calories: r.calories,
   splits: safeJson(r.splits, []),
+  laps: safeJson(r.laps, []),
+  detailsAt: r.details_at,
   routePolyline: r.route_polyline,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -144,6 +153,7 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
       title: 'title',
       routePolyline: 'route_polyline',
       splits: 'splits',
+      laps: 'laps',
       avgHr: 'avg_hr',
       maxHr: 'max_hr',
       calories: 'calories',
@@ -153,7 +163,7 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
     };
     const keys = Object.keys(p) as (keyof MergePatch)[];
     if (!keys.length) return;
-    const vals = keys.map((k) => (k === 'splits' ? JSON.stringify(p.splits) : (p[k] as string | number | null)));
+    const vals = keys.map((k) => (k === 'splits' || k === 'laps' ? JSON.stringify(p[k]) : (p[k] as string | number | null)));
     await db.runAsync(
       `UPDATE activities SET ${keys.map((k) => `${cols[k]} = ?`).join(', ')}, updated_at = ? WHERE id = ?`,
       [...vals, now(), id],
@@ -202,12 +212,12 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
         return { activity: fromRow(row!), duplicate: true, merged: true };
       }
       const t = now();
-      const activity: Activity = { ...a, id: newId(), createdAt: t, updatedAt: t };
+      const activity: Activity = { ...a, detailsAt: a.detailsAt ?? null, id: newId(), createdAt: t, updatedAt: t };
       await db.runAsync(
         `INSERT INTO activities (id, source, external_id, file_hash, type, title, location_name, started_at,
           utc_offset_min, distance_m, moving_time_s, elapsed_time_s, elevation_gain_m, avg_hr, max_hr, calories,
-          splits, route_polyline, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          splits, laps, details_at, route_polyline, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           activity.id,
           activity.source,
@@ -226,6 +236,8 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
           activity.maxHr ?? null,
           activity.calories ?? null,
           JSON.stringify(activity.splits),
+          JSON.stringify(activity.laps ?? []),
+          activity.detailsAt ?? null,
           activity.routePolyline ?? null,
           t,
           t,
@@ -237,13 +249,16 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
     async updateActivity(id, patch) {
       const sets: string[] = [];
       const vals: (string | number | null)[] = [];
-      const add = (col: string, v: string | null) => {
+      const add = (col: string, v: string | number | null) => {
         sets.push(`${col} = ?`);
         vals.push(v);
       };
       if (patch.title !== undefined) add('title', patch.title);
       if (patch.type !== undefined) add('type', patch.type);
       if (patch.locationName !== undefined) add('location_name', patch.locationName ?? null);
+      if (patch.laps !== undefined) add('laps', JSON.stringify(patch.laps));
+      if (patch.splits !== undefined) add('splits', JSON.stringify(patch.splits));
+      if (patch.detailsAt !== undefined) add('details_at', patch.detailsAt ?? null);
       if (!sets.length) return;
       await db.runAsync(`UPDATE activities SET ${sets.join(', ')}, updated_at = ? WHERE id = ?`, [...vals, now(), id]);
       events.emit();

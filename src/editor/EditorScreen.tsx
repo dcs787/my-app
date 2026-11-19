@@ -8,6 +8,7 @@ import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, us
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActivities, useActivity, useSettings, useStore } from '@/data';
+import { useStravaDetails } from '@/features/stravaDetails';
 import { CANVAS, FONT_IDS, type Background, type Composition, type StatKey } from '@/domain/composition';
 import { computeTotals, type Period, type Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
@@ -63,6 +64,7 @@ function EditorLoader({ activityId }: { activityId: string }) {
   const { data: settings, loading: loadingSettings } = useSettings();
   const fonts = useTemplateFonts();
   const [draft, setDraft] = useState<Draft | null>(null);
+  useStravaDetails(activity);
 
   // load the last design for this activity, or lay out a fresh one
   useEffect(() => {

@@ -80,3 +80,22 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
   stats) had no role on web. They are now buttons with aria-pressed there;
   iOS keeps the native toggle role.
 - 83 unit tests, 12 e2e tests.
+
+## Fix 4: watch laps (2026-11-19)
+
+- Laps are stored on each activity (schema v2 migration adds `laps` and
+  `details_at`; tested upgrading a v1 database).
+- Sources: FIT lap messages and TCX laps keep the device's own distance,
+  time, heart rate and climb. Strava: opening an activity fetches its laps
+  and Strava's own mile and km splits with one call, not during sync, so a
+  first sync doesn't use up the rate limit. Apple Health: segments marked on
+  the Watch become laps measured on the route (not verified on a device).
+  Merging takes laps from whichever recording has them.
+- The activity screen shows Laps (n) first, with Splits a tab away, and says
+  where each came from ("Laps from your watch", "Splits from Strava",
+  "Worked out from GPS"). New Laps sticker (26 stickers).
+- Accessibility: react-native-web ignores accessibilityState, so tabs,
+  disabled stickers, the busy state on buttons and help's expanded state were
+  silent on web. All now use aria-* props, which work on iOS and web;
+  swatches are radios with aria-checked.
+- 95 unit tests, 13 e2e tests.

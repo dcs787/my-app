@@ -42,7 +42,8 @@ export function IconButton({
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ disabled, selected }}
+      aria-disabled={!!disabled}
+      aria-selected={selected}
       hitSlop={pad > 0 ? pad : undefined}
       style={({ pressed }) => [
         {

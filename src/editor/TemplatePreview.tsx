@@ -132,7 +132,7 @@ function TileButton({
         accessibilityRole="button"
         accessibilityLabel={reason ? `${label}, unavailable: ${reason}` : `${verb} ${label}`}
         accessibilityHint={onLongPress && !reason ? 'Press and hold to save to Photos' : undefined}
-        accessibilityState={{ disabled: !!reason }}
+        aria-disabled={!!reason}
         style={({ pressed }) => [
           { width: size, height: size, borderRadius: radius.md },
           pressed && !reason && styles.pressed,

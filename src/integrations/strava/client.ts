@@ -1,8 +1,10 @@
 import type { Store } from '@/data/store';
 
 import { STRAVA } from './config';
-import { mapStravaActivity } from './map';
-import type { StravaActivity, StravaTokens } from './types';
+import type { Activity } from '@/domain/types';
+
+import { mapStravaActivity, mapStravaDetails } from './map';
+import type { StravaActivity, StravaDetailedActivity, StravaTokens } from './types';
 
 export type TokenStore = {
   get(): Promise<StravaTokens | null>;
@@ -87,6 +89,45 @@ export async function syncStrava(
     }
     if (list.length < STRAVA.perPage) return result;
     page++;
+  }
+}
+
+/**
+ * Fetch one activity's laps and splits (one API call) and save them. Called
+ * when a Strava activity is opened, not during sync, so a big first sync
+ * doesn't spend the rate limit on activities nobody looks at. Marks the
+ * activity as fetched even when Strava no longer has it, so it isn't asked
+ * again.
+ */
+export async function fetchStravaDetails(
+  store: Store,
+  tokens: TokenStore,
+  activity: Pick<Activity, 'id' | 'source' | 'externalId' | 'splits'>,
+  f: Fetch = fetch,
+  now: () => number = Date.now,
+): Promise<'saved' | 'gone'> {
+  if (activity.source !== 'strava' || !activity.externalId) throw new Error('Not a Strava activity');
+  let refreshed = false;
+  for (;;) {
+    const t = await validToken(tokens, f);
+    const res = await f(`${STRAVA.apiBase}/activities/${encodeURIComponent(activity.externalId)}?include_all_efforts=false`, {
+      headers: { Authorization: `Bearer ${t.accessToken}` },
+    });
+    if (res.status === 401 && !refreshed) {
+      await tokens.set({ ...t, expiresAt: 0 });
+      refreshed = true;
+      continue;
+    }
+    if (res.status === 401) throw new StravaAuthError('Strava access was removed. Connect again.');
+    if (res.status === 429) throw new StravaRateLimitError('Strava is busy. Try again in 15 minutes.');
+    if (res.status === 404) {
+      await store.updateActivity(activity.id, { detailsAt: now() });
+      return 'gone';
+    }
+    if (!res.ok) throw new Error(`Strava error ${res.status}`);
+    const { laps, splits } = mapStravaDetails((await res.json()) as StravaDetailedActivity);
+    await store.updateActivity(activity.id, { laps, ...(splits.length ? { splits } : {}), detailsAt: now() });
+    return 'saved';
   }
 }
 

@@ -5,9 +5,9 @@ import { createMemoryStore } from '@/data/memoryStore';
 import { decodePolyline } from '@/domain/geo';
 
 import { handle } from '../../../../supabase/functions/strava-token/handler';
-import { syncStrava, validToken, deauthorize, StravaAuthError, StravaRateLimitError, type TokenStore } from '../client';
+import { fetchStravaDetails, syncStrava, validToken, deauthorize, StravaAuthError, StravaRateLimitError, type TokenStore } from '../client';
 import { STRAVA } from '../config';
-import { mapStravaActivity } from '../map';
+import { mapStravaActivity, mapStravaDetails } from '../map';
 import type { StravaActivity, StravaTokens } from '../types';
 
 const act = (id: number, over: Partial<StravaActivity> = {}): StravaActivity => ({
@@ -150,5 +150,55 @@ describe('token function', () => {
     expect((await handle(post({ grant: 'code', code: 'abcdef123456' }), {}, never)).status).toBe(500);
     const refused = (async () => jsonRes(400, { message: 'Bad Request' })) as typeof fetch;
     expect((await handle(post({ grant: 'refresh', refresh_token: 'abcdef123456' }), env, refused)).status).toBe(401);
+  });
+});
+
+describe('activity details', () => {
+  const detail = {
+    ...act(9),
+    laps: [
+      { lap_index: 1, distance: 1609.3, elapsed_time: 470, moving_time: 465, average_heartrate: 148.6, total_elevation_gain: 4 },
+      { lap_index: 2, distance: 1609.3, elapsed_time: 455, moving_time: 455, average_heartrate: 155.2, total_elevation_gain: 12 },
+      { lap_index: 3, distance: 0, elapsed_time: 0 }, // an accidental double press
+    ],
+    splits_metric: [
+      { distance: 1000, elapsed_time: 290, moving_time: 288, elevation_difference: 2.1, split: 1 },
+      { distance: 1000, elapsed_time: 285, moving_time: 285, elevation_difference: -1, split: 2 },
+    ],
+    splits_standard: [{ distance: 1609.3, elapsed_time: 465, moving_time: 462, elevation_difference: 1, split: 1 }],
+  };
+
+  it('maps laps and Strava splits, dropping empty laps', () => {
+    const d = mapStravaDetails(detail);
+    expect(d.laps).toEqual([
+      { index: 1, distanceM: 1609.3, timeS: 465, avgHr: 149, climbM: 4 },
+      { index: 2, distanceM: 1609.3, timeS: 455, avgHr: 155, climbM: 12 },
+    ]);
+    expect(d.splits.filter((s) => s.unit === 'km').map((s) => s.timeS)).toEqual([288, 285]);
+    expect(d.splits.find((s) => s.unit === 'mi')).toMatchObject({ index: 1, distanceM: 1609.3, timeS: 462, elevationDeltaM: 1 });
+  });
+
+  it('fetches one activity on demand and saves its laps, splits and when', async () => {
+    const store = createMemoryStore(() => 'x', () => 1);
+    const { activity } = await store.insertActivity(mapStravaActivity(act(9)));
+    const urls: string[] = [];
+    const f = (async (url: string) => {
+      urls.push(url);
+      return jsonRes(200, detail);
+    }) as typeof fetch;
+    expect(await fetchStravaDetails(store, memTokens(fresh()), activity, f, () => 1234)).toBe('saved');
+    expect(urls).toEqual([`${STRAVA.apiBase}/activities/9?include_all_efforts=false`]);
+    const saved = await store.getActivity(activity.id);
+    expect(saved).toMatchObject({ detailsAt: 1234 });
+    expect(saved!.laps).toHaveLength(2);
+    expect(saved!.splits.length).toBe(3);
+  });
+
+  it('marks an activity Strava no longer has, and reports limits', async () => {
+    const store = createMemoryStore(() => 'x', () => 1);
+    const { activity } = await store.insertActivity(mapStravaActivity(act(9)));
+    await fetchStravaDetails(store, memTokens(fresh()), activity, (async () => jsonRes(404, {})) as typeof fetch, () => 55);
+    expect(await store.getActivity(activity.id)).toMatchObject({ detailsAt: 55, laps: [] });
+    await expect(fetchStravaDetails(store, memTokens(fresh()), activity, (async () => jsonRes(429, {})) as typeof fetch)).rejects.toThrow(StravaRateLimitError);
   });
 });

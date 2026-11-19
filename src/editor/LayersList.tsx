@@ -82,7 +82,7 @@ function Row({
         {...pressableProps}
         accessibilityRole="button"
         accessibilityLabel={`${name}${selected ? ', selected' : ''}. Select`}
-        accessibilityState={{ selected }}
+        aria-selected={selected}
         style={({ pressed }) => [styles.name, stateStyle(pressed)]}>
         <View style={[styles.swatch, { backgroundColor: element.colour }]} />
         <View style={{ flex: 1 }}>

@@ -57,7 +57,8 @@ export function Button({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled: inactive, busy: loading }}
+      aria-disabled={inactive}
+      aria-busy={loading}
       // keep a 44pt hit area for the small size
       hitSlop={size === 'sm' ? 6 : undefined}
       style={({ pressed }) => [

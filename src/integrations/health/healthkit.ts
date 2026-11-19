@@ -91,6 +91,8 @@ export async function fetchWorkouts(anchor: string | null, since: Date): Promise
       avgHr,
       maxHr,
       route,
+      // HKWorkoutEventType.segment = 7: what the Workout app records when you mark a segment
+      segments: (w.events ?? []).filter((e) => Number(e.type) === 7).map((e) => ({ start: e.startDate, end: e.endDate })),
     });
   }
   return { workouts, deletedIds: res.deletedSamples.map((d) => d.uuid), anchor: res.newAnchor };

@@ -106,3 +106,18 @@ export const SOURCE_LABEL = {
   fit: 'FIT file',
   manual: 'Added by hand',
 } as const;
+
+/** A workout has laps worth showing when the watch or app recorded at least two. */
+export const hasLaps = (a: Pick<Activity, 'laps'>) => a.laps.length >= 2;
+
+/** Where the laps came from, said plainly under the list. */
+export function lapsNote(a: Pick<Activity, 'source'>): string {
+  if (a.source === 'apple_health') return 'Segments you marked on your watch';
+  if (a.source === 'strava') return 'Laps from Strava';
+  return 'Laps from your watch';
+}
+
+/** Where the splits came from: Strava works them out itself; otherwise we do, from the route. */
+export function splitsNote(a: Pick<Activity, 'source' | 'detailsAt'>): string {
+  return a.source === 'strava' && a.detailsAt ? 'Splits from Strava' : 'Worked out from GPS';
+}

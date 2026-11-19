@@ -75,6 +75,8 @@ create table activities (
   max_hr smallint check (max_hr between 20 and 250),
   calories integer check (calories >= 0),
   splits jsonb not null default '[]',   -- [{ unit: 'mi'|'km', distance_m, time_s, elev_m }]
+  laps jsonb not null default '[]',     -- watch laps: [{ index, distance_m, time_s, avg_hr, climb_m }]
+  details_at timestamptz,               -- when laps/splits were fetched from the provider (Strava)
   route_polyline text,                  -- Google encoded polyline, simplified
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

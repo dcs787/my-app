@@ -39,7 +39,7 @@ export function isSameWorkout(a: Comparable, b: Comparable): boolean {
 }
 
 export type MergePatch = Partial<
-  Pick<Activity, 'title' | 'routePolyline' | 'splits' | 'avgHr' | 'maxHr' | 'calories' | 'elevationGainM' | 'locationName' | 'type'>
+  Pick<Activity, 'title' | 'routePolyline' | 'splits' | 'laps' | 'avgHr' | 'maxHr' | 'calories' | 'elevationGainM' | 'locationName' | 'type'>
 >;
 
 /**
@@ -50,6 +50,7 @@ export function mergePatch(existing: Activity, incoming: NewActivity): MergePatc
   const p: MergePatch = {};
   if (!existing.routePolyline && incoming.routePolyline) p.routePolyline = incoming.routePolyline;
   if (existing.splits.length === 0 && incoming.splits.length > 0) p.splits = incoming.splits;
+  if (existing.laps.length < 2 && incoming.laps.length >= 2) p.laps = incoming.laps;
   if (existing.avgHr == null && incoming.avgHr != null) p.avgHr = incoming.avgHr;
   if (existing.maxHr == null && incoming.maxHr != null) p.maxHr = incoming.maxHr;
   if (existing.calories == null && incoming.calories != null) p.calories = incoming.calories;

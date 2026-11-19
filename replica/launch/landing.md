@@ -36,7 +36,7 @@ Paraphrased from the review research (`fixes.md`), not quoted:
 | No watermark, ever | watermark (2) |
 | One run, shown once, even from two apps | duplicate workouts |
 | Help built in | "no support of any kind" (4) |
-| 25 stickers, totals for your week, copy any sticker | parity: the price of entry |
+| 26 stickers, totals for your week, copy any sticker | parity: the price of entry |
 
 ## 5. Pricing
 

@@ -58,7 +58,7 @@ upload time (they change; currently a 6.9" iPhone set is required). Suggested
 five, each with a one-line caption in the brand voice:
 
 1. The editor with a photo story: "Your run, ready to post"
-2. The sticker sheet: "25 stickers. No watermark."
+2. The sticker sheet: "26 stickers. No watermark."
 3. Activity list with "Updated just now": "Synced before you've caught your breath"
 4. Copy stickers page: "Copy any sticker, paste it anywhere"
 5. Settings → Connections: "Apple Health, Strava, or a file. No account."

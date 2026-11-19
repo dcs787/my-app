@@ -24,7 +24,7 @@ const FAQ: { q: string; a: string }[] = [
   },
   {
     q: 'Why do the same run’s numbers differ between apps?',
-    a: 'Each app smooths GPS and elevation differently. Mileprint uses your device’s own totals when the file or app provides them, and works out splits from the route otherwise.',
+    a: 'Each app smooths GPS and elevation differently. Mileprint uses your device’s own totals and laps when the file or app provides them (FIT and TCX files, Strava, segments you mark on Apple Watch), and works out splits from the route otherwise. Under the list it says which.',
   },
   {
     q: 'How do I post to Instagram?',
@@ -61,7 +61,7 @@ export default function HelpScreen() {
             <Pressable
               onPress={() => setOpen(expanded ? null : i)}
               accessibilityRole="button"
-              accessibilityState={{ expanded }}
+              aria-expanded={expanded}
               style={styles.q}>
               <Text variant="base" weight="600" style={{ flex: 1 }}>
                 {f.q}

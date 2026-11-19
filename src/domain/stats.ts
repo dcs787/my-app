@@ -1,5 +1,5 @@
 import { haversine } from './geo';
-import type { Split, TrackPoint, Units } from './types';
+import type { Lap, Split, TrackPoint, Units } from './types';
 
 export const METRES_PER = { mi: 1609.344, km: 1000 } as const;
 
@@ -130,4 +130,35 @@ export function computeSplits(points: TrackPoint[], unit: Units): Split[] {
     });
   }
   return splits;
+}
+
+/**
+ * Laps from start and end times (Apple Health segments), measured on the timed
+ * route points. Overlapping windows are dropped, and so are laps with no
+ * points or no time.
+ */
+export function lapsFromWindows(points: TrackPoint[], windows: { start: number; end: number }[]): Lap[] {
+  const timed = points.filter((p) => p.time != null);
+  const laps: Lap[] = [];
+  let lastEnd = -Infinity;
+  for (const w of [...windows].sort((a, b) => a.start - b.start)) {
+    if (w.end <= w.start || w.start < lastEnd) continue;
+    const inside = timed.filter((p) => p.time! >= w.start && p.time! <= w.end);
+    if (inside.length < 2) continue;
+    const s = computeStats(inside);
+    if (!s.distanceM || !s.movingTimeS) continue;
+    laps.push({
+      index: laps.length + 1,
+      distanceM: s.distanceM,
+      timeS: s.movingTimeS,
+      ...(s.avgHr != null ? { avgHr: s.avgHr } : {}),
+    });
+    lastEnd = w.end;
+  }
+  return laps;
+}
+
+/** Keep only laps with time, renumbered from 1. */
+export function cleanLaps(laps: Lap[]): Lap[] {
+  return laps.filter((l) => l.timeS > 0 && Number.isFinite(l.distanceM)).map((l, i) => ({ ...l, index: i + 1 }));
 }

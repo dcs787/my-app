@@ -28,6 +28,20 @@ test('details show splits; units switch to km across the app', async ({ page }) 
   await expect(page.getByText(/10\.20 km/).first()).toBeVisible();
 });
 
+test('watch laps show first, with splits a tap away, each saying where it came from', async ({ page }) => {
+  await page.goto('/activities/a2'); // Hill repeats: six laps
+  await expect(page.getByRole('tab', { name: 'Laps (6)' })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByLabel(/^Lap 6: /)).toBeVisible();
+  await expect(page.getByText('Laps from your watch')).toBeVisible();
+  await page.getByRole('tab', { name: 'Splits' }).click();
+  await expect(page.getByText('Worked out from GPS')).toBeVisible();
+  await expect(page.getByLabel(/^Lap 1: /)).toHaveCount(0);
+
+  await page.goto('/activities/a1'); // no laps: splits only, no tabs
+  await expect(page.getByRole('tab', { name: /Laps/ })).toHaveCount(0);
+  await expect(page.getByText('Worked out from GPS')).toBeVisible();
+});
+
 test('help answers the common questions', async ({ page }) => {
   await page.goto('/help');
   await expect(page.getByText('No. Mileprint keeps your activities and designs on this phone.', { exact: false })).toBeVisible();

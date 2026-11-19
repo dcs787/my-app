@@ -150,6 +150,13 @@ the Instagram URL scheme.
 - [ ] Close the app, record a Watch workout, wait a few minutes, open the app:
       the workout is already there (background sync)
 - [ ] Copy stickers → tap one → paste it onto a photo in an Instagram story
+- [ ] Open a Strava run you pressed the lap button on → after a second or two
+      the Laps tab appears, and Splits says "Splits from Strava"
+- [ ] On Apple Watch, start a run and double-tap the screen to mark a few
+      segments → in Mileprint the run shows them as laps. (Not tested on a
+      device yet: if they don't appear, tell me what the Health app shows
+      under the workout.)
+- [ ] Import a FIT file from a Garmin with auto-laps → Laps (n) matches the watch
 
 ## Later: App Store
 

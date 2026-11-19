@@ -1,5 +1,5 @@
 import { encodePolyline, simplify } from '@/domain/geo';
-import { computeSplits, computeStats } from '@/domain/stats';
+import { computeSplits, computeStats, lapsFromWindows } from '@/domain/stats';
 import type { ActivityType, NewActivity, TrackPoint } from '@/domain/types';
 
 /**
@@ -15,7 +15,7 @@ export function sampleActivities(now = Date.now()): NewActivity[] {
   };
   return [
     fromLoop({ title: 'Sunrise loop by the river', type: 'run', start: at(0, 6), km: 10.2, paceS: 290, hills: 18, seed: 1 }),
-    fromLoop({ title: 'Hill repeats', type: 'run', start: at(2, 17), km: 8.1, paceS: 318, hills: 60, seed: 2 }),
+    fromLoop({ title: 'Hill repeats', type: 'run', start: at(2, 17), km: 8.1, paceS: 318, hills: 60, seed: 2, laps: 6 }),
     fromLoop({ title: 'Saturday long ride out to the reservoir and back', type: 'ride', start: at(4, 8), km: 52.4, paceS: 120, hills: 35, seed: 3 }),
     {
       source: 'manual',
@@ -34,6 +34,7 @@ export function sampleActivities(now = Date.now()): NewActivity[] {
       maxHr: null,
       calories: 480,
       splits: [],
+      laps: [],
       routePolyline: null,
     },
   ];
@@ -47,6 +48,8 @@ function fromLoop(o: {
   paceS: number; // seconds per km
   hills: number; // metres of rolling amplitude
   seed: number;
+  /** split the workout into this many equal-time laps, as if the button was pressed */
+  laps?: number;
 }): NewActivity {
   const pts = loop(o);
   const s = computeStats(pts);
@@ -67,6 +70,7 @@ function fromLoop(o: {
     maxHr: s.maxHr ?? null,
     calories: null,
     splits: [...computeSplits(pts, 'mi'), ...computeSplits(pts, 'km')],
+    laps: o.laps ? lapsFromWindows(pts, equalWindows(pts, o.laps)) : [],
     routePolyline: encodePolyline(simplify(pts, 5)),
   };
 }
@@ -106,4 +110,10 @@ function loop(o: { start: number; km: number; paceS: number; hills: number; seed
     pts[i].time = Math.round(tMs);
   }
   return pts;
+}
+
+function equalWindows(pts: TrackPoint[], n: number) {
+  const t0 = pts[0].time!;
+  const len = (pts[pts.length - 1].time! - t0) / n;
+  return Array.from({ length: n }, (_, i) => ({ start: t0 + i * len, end: t0 + (i + 1) * len }));
 }

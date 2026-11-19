@@ -25,6 +25,21 @@ describe('TCX', () => {
     expect(a.startedAt).toBe(pts[0].time);
   });
 
+  it('keeps each lap with its own totals', () => {
+    const laps = [
+      { distanceM: 1000, timeS: 290, hr: 148 },
+      { distanceM: 1000, timeS: 300, hr: 152 },
+      { distanceM: 1010, timeS: 312, hr: 157 },
+    ];
+    const a = activityFromTcx(toTcx(pts, { distanceM: 0, timeS: 0, laps }), { fileHash: 'h' });
+    expect(a.laps).toEqual([
+      { index: 1, distanceM: 1000, timeS: 290, avgHr: 148 },
+      { index: 2, distanceM: 1000, timeS: 300, avgHr: 152 },
+      { index: 3, distanceM: 1010, timeS: 312, avgHr: 157 },
+    ]);
+    expect(a).toMatchObject({ distanceM: 3010, movingTimeS: 902 });
+  });
+
   it('rejects files that are not TCX', () => {
     expect(() => parseTcx('<gpx></gpx>')).toThrow(ImportError);
   });
@@ -61,6 +76,21 @@ describe('FIT', () => {
       { fileHash: 'f' },
     );
     expect(trail.type).toBe('trail_run');
+  });
+
+  it('reads the watch laps', async () => {
+    const laps = [
+      { distanceM: 1609, timerS: 480, hr: 150, ascentM: 12 },
+      { distanceM: 1396, timerS: 420, hr: 158, ascentM: 30 },
+    ];
+    const a = await activityFromFit(
+      toFit(pts, { sport: 1, distanceM: 3005, timerS: 900, elapsedS: 900, calories: 1, ascentM: 42, utcOffsetMin: 0, laps }),
+      { fileHash: 'f' },
+    );
+    expect(a.laps).toEqual([
+      { index: 1, distanceM: 1609, timeS: 480, avgHr: 150, climbM: 12 },
+      { index: 2, distanceM: 1396, timeS: 420, avgHr: 158, climbM: 30 },
+    ]);
   });
 
   it('rejects garbage', async () => {

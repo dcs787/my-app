@@ -9,7 +9,7 @@ import type { SQLiteDatabase } from 'expo-sqlite';
 import type { NewActivity } from '@/domain/types';
 
 import { createMemoryStore } from '../memoryStore';
-import { createSqliteStore, migrate } from '../sqliteStore';
+import { createSqliteStore, migrate, MIGRATIONS } from '../sqliteStore';
 import { DEFAULT_SETTINGS, type Store } from '../store';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -67,6 +67,7 @@ const now = () => ++clock;
 const sample = (over: Partial<NewActivity> = {}): NewActivity => ({
   source: 'gpx',
   externalId: null,
+  laps: [],
   fileHash: `hash-${seq}-${Math.random()}`,
   type: 'run',
   title: 'Morning run',
@@ -97,6 +98,18 @@ const makers: [string, () => Promise<Store>][] = [
     },
   ],
 ];
+
+it('upgrades a version 1 database without losing activities', async () => {
+  const db = nodeAdapter();
+  await db.execAsync(MIGRATIONS[0]);
+  await db.execAsync('PRAGMA user_version = 1');
+  await db.runAsync(
+    `INSERT INTO activities (id, source, type, title, started_at, splits, created_at, updated_at) VALUES ('old', 'gpx', 'run', 'Before laps', 5, '[]', 1, 1)`,
+  );
+  await migrate(db);
+  const store = createSqliteStore(db, newId, now);
+  expect(await store.getActivity('old')).toMatchObject({ title: 'Before laps', laps: [], detailsAt: null });
+});
 
 describe.each(makers)('%s store', (_name, make) => {
   let store: Store;
@@ -149,6 +162,22 @@ describe.each(makers)('%s store', (_name, make) => {
     const longer = await store.insertActivity(sample({ source: 'gpx', fileHash: 'g', startedAt: t + 10_000, distanceM: 10600 }));
     expect([ride, later, longer].map((r) => r.duplicate)).toEqual([false, false, false]);
     expect(await store.listActivities()).toHaveLength(4);
+  });
+
+  it('keeps watch laps, takes them from a merged twin, and saves fetched details', async () => {
+    const t = Date.UTC(2026, 10, 12, 7);
+    const laps = [
+      { index: 1, distanceM: 1609, timeS: 480, avgHr: 150 },
+      { index: 2, distanceM: 1609, timeS: 470 },
+    ];
+    const health = await store.insertActivity(sample({ source: 'apple_health', externalId: 'hk-7', fileHash: null, startedAt: t, laps: [] }));
+    const fit = await store.insertActivity(sample({ source: 'fit', fileHash: 'fit-7', startedAt: t + 20_000, laps }));
+    expect(fit.merged).toBe(true);
+    expect((await store.getActivity(health.activity.id))!.laps).toEqual(laps);
+
+    const splits = [{ unit: 'km' as const, index: 1, distanceM: 1000, timeS: 300 }];
+    await store.updateActivity(health.activity.id, { laps: [laps[0]], splits, detailsAt: 99 });
+    expect(await store.getActivity(health.activity.id)).toMatchObject({ laps: [laps[0]], splits, detailsAt: 99 });
   });
 
   it('updates and deletes, deleting the designs with the activity', async () => {

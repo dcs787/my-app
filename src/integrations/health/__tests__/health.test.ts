@@ -24,6 +24,29 @@ const run = (over: Partial<HealthWorkout> = {}): HealthWorkout => ({
 });
 
 describe('Apple Health mapping', () => {
+  it('turns marked segments into laps measured on the route', () => {
+    const t = start.getTime();
+    const a = mapHealthWorkout(
+      run({
+        segments: [
+          { start: new Date(t), end: new Date(t + 300_000) },
+          { start: new Date(t + 300_000), end: new Date(t + 900_000) },
+          { start: new Date(t + 100_000), end: new Date(t + 200_000) }, // overlaps the first: dropped
+        ],
+      }),
+    );
+    expect(a.laps.map((l) => l.index)).toEqual([1, 2]);
+    expect(a.laps[0].distanceM).toBeCloseTo(1000, -1);
+    expect(a.laps[0].timeS).toBe(300);
+    expect(a.laps[1].distanceM).toBeCloseTo(2000, -1);
+  });
+
+  it('has no laps without segments, or without a route to measure them on', () => {
+    expect(mapHealthWorkout(run()).laps).toEqual([]);
+    const t = start.getTime();
+    expect(mapHealthWorkout(run({ route: [], segments: [{ start: new Date(t), end: new Date(t + 300_000) }] })).laps).toEqual([]);
+  });
+
   it('maps a Watch run with route, heart rate and its own time zone', () => {
     const a = mapHealthWorkout(run());
     expect(a).toMatchObject({

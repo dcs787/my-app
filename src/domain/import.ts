@@ -2,7 +2,7 @@ import { parseFit } from './fit';
 import { defaultTitle } from './format';
 import { encodePolyline, simplify } from './geo';
 import { parseGpx } from './gpx';
-import { computeSplits, computeStats } from './stats';
+import { cleanLaps, computeSplits, computeStats, lapsFromWindows } from './stats';
 import { parseTcx } from './tcx';
 import { ImportError, type ParsedTrack } from './track';
 import type { ActivityType, NewActivity, Source, Units } from './types';
@@ -51,6 +51,7 @@ export function activityFromTrack(track: ParsedTrack, source: Source, opts: Buil
     calories: sum.calories ?? null,
     // splits in both units so switching units later doesn't need the raw track
     splits: timed.length >= 2 ? [...computeSplits(timed, 'mi'), ...computeSplits(timed, 'km')] : [],
+    laps: track.laps?.length ? cleanLaps(track.laps) : track.lapWindows?.length ? lapsFromWindows(track.points, track.lapWindows) : [],
     routePolyline: route.length >= 2 ? encodePolyline(route) : null,
   };
 }
@@ -130,6 +131,7 @@ export function activityFromManual(
       maxHr: null,
       calories: cal != null ? Math.round(cal) : null,
       splits: [],
+      laps: [],
       routePolyline: null,
     },
   };

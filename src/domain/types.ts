@@ -26,6 +26,17 @@ export type Split = {
   elevationDeltaM?: number;
 };
 
+/** A lap the device or app recorded: a button press, an auto-lap, or a marked segment. */
+export type Lap = {
+  /** 1-based */
+  index: number;
+  distanceM: number;
+  /** moving time of the lap */
+  timeS: number;
+  avgHr?: number;
+  climbM?: number;
+};
+
 export type Activity = {
   id: string;
   source: Source;
@@ -46,6 +57,10 @@ export type Activity = {
   maxHr?: number | null;
   calories?: number | null;
   splits: Split[];
+  /** laps as recorded by the watch or app; empty when it recorded none */
+  laps: Lap[];
+  /** when laps and splits were last fetched from the provider (Strava), ms */
+  detailsAt?: number | null;
   /** Google encoded polyline, simplified */
   routePolyline?: string | null;
   createdAt: number;

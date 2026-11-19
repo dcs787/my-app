@@ -22,6 +22,8 @@ export type HealthWorkout = {
   avgHr?: number;
   maxHr?: number;
   route?: { latitude: number; longitude: number; altitude?: number; date: Date }[];
+  /** segments the person marked during the workout (HKWorkoutEventType.segment) */
+  segments?: { start: Date; end: Date }[];
 };
 
 /** HKWorkoutActivityType raw values we care about (Apple's documented enum). */
@@ -64,6 +66,7 @@ export function mapHealthWorkout(w: HealthWorkout): NewActivity {
       points,
       startedAt,
       utcOffsetMin: w.timeZone ? offsetForZone(w.timeZone, startedAt) : undefined,
+      lapWindows: w.segments?.map((s) => ({ start: s.start.getTime(), end: s.end.getTime() })),
       summary: {
         distanceM: w.distanceM && w.distanceM > 0 ? w.distanceM : undefined,
         // Apple's duration excludes pauses, so it's the moving time

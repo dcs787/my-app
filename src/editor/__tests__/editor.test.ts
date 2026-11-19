@@ -1,4 +1,5 @@
 import { sampleActivities } from '@/data/samples';
+import { hasLaps, lapsNote, splitsNote } from '@/domain/format';
 import type { Activity } from '@/domain/types';
 
 import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, toggleStat, updateElement, MAX_SCALE } from '../compose';
@@ -6,7 +7,7 @@ import type { Shape } from '../shapes';
 import { availableStats, presentStats, statValues, templateById, TEMPLATES, unavailableReason } from '../templates';
 
 const now = Date.UTC(2026, 10, 18, 12);
-const [run, , ride, treadmill] = sampleActivities(now).map(
+const [run, hills, ride, treadmill] = sampleActivities(now).map(
   (a, i): Activity => ({ ...a, id: `a${i}`, createdAt: now, updatedAt: now }),
 );
 let n = 0;
@@ -173,5 +174,25 @@ describe('chosen stats', () => {
     const next = updateElement(c, row.id, { stats: ['time', 'distance'] });
     expect(next.elements.find((e) => e.id === row.id)?.stats).toEqual(['time', 'distance']);
     expect(JSON.parse(JSON.stringify(updateElement(next, row.id, { stats: undefined }))).elements.find((e: { id: string }) => e.id === row.id).stats).toBeUndefined();
+  });
+});
+
+describe('laps', () => {
+  const laps = templateById('laps-bars')!;
+
+  it('the Laps sticker needs two or more laps, and draws one bar each', () => {
+    expect(unavailableReason(laps, run)).toBe('No laps');
+    expect(unavailableReason(laps, { ...run, laps: [{ index: 1, distanceM: 5000, timeS: 1500 }] })).toBe('No laps');
+    expect(hills.laps).toHaveLength(6);
+    expect(unavailableReason(laps, hills)).toBeNull();
+    expect(laps.render({ activity: hills, units: 'mi' }).filter((s) => s.kind === 'rect')).toHaveLength(6);
+  });
+
+  it('says where laps and splits came from', () => {
+    expect(lapsNote({ source: 'fit' })).toBe('Laps from your watch');
+    expect(lapsNote({ source: 'apple_health' })).toBe('Segments you marked on your watch');
+    expect(splitsNote({ source: 'strava', detailsAt: 5 })).toBe('Splits from Strava');
+    expect(splitsNote({ source: 'gpx', detailsAt: null })).toBe('Worked out from GPS');
+    expect(hasLaps(hills)).toBe(true);
   });
 });

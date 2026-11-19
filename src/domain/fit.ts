@@ -2,7 +2,7 @@ import FitParser from 'fit-file-parser';
 
 import { mapType } from './gpx';
 import { ImportError, type ParsedTrack, type TrackSummary } from './track';
-import type { TrackPoint } from './types';
+import type { Lap, TrackPoint } from './types';
 
 /**
  * Parse a FIT file (Garmin, Coros, Wahoo, Suunto, Polar exports). Uses the
@@ -50,7 +50,16 @@ export async function parseFit(bytes: ArrayBuffer): Promise<ParsedTrack> {
   if (session?.total_calories) summary.calories = session.total_calories;
   if (session?.avg_heart_rate) summary.avgHr = session.avg_heart_rate;
 
+  const laps: Lap[] = (data.laps ?? []).map((l, i) => ({
+    index: i + 1,
+    distanceM: l.total_distance ?? 0,
+    timeS: Math.round(l.total_timer_time ?? l.total_elapsed_time ?? 0),
+    ...(l.avg_heart_rate ? { avgHr: l.avg_heart_rate } : {}),
+    ...(l.total_ascent != null ? { climbM: l.total_ascent } : {}),
+  }));
+
   return {
+    laps,
     type: mapType(typeof session?.sport === 'string' ? (session.sub_sport === 'trail' ? 'trail_running' : session.sport) : undefined),
     points,
     startedAt,

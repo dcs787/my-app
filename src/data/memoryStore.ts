@@ -34,7 +34,7 @@ export function createMemoryStore(newId: () => string, now: () => number = Date.
         return { activity: merged, duplicate: true, merged: true };
       }
       const t = now();
-      const activity: Activity = { ...input, id: newId(), createdAt: t, updatedAt: t };
+      const activity: Activity = { ...input, detailsAt: input.detailsAt ?? null, id: newId(), createdAt: t, updatedAt: t };
       activities.push(activity);
       events.emit();
       return { activity, duplicate: false };

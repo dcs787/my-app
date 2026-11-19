@@ -29,6 +29,7 @@ test('stickers an activity cannot fill say why', async ({ page }) => {
   await openEditor(page, 'a4'); // treadmill run: no route, no splits
   await page.getByRole('button', { name: 'Add a sticker' }).click();
   await expect(page.getByRole('button', { name: 'Route, unavailable: No route', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Laps, unavailable: No laps', exact: true })).toBeDisabled();
 });
 
 test('choose which stats a sticker shows, in order', async ({ page }) => {

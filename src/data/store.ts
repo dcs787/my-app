@@ -44,7 +44,8 @@ export interface Store {
   getActivity(id: string): Promise<Activity | null>;
   /** Skips repeats of the same file or provider id, and merges the same workout recorded by another app. */
   insertActivity(a: NewActivity): Promise<InsertResult>;
-  updateActivity(id: string, patch: Partial<Pick<Activity, 'title' | 'type' | 'locationName'>>): Promise<void>;
+  /** Edits by the person (title, type, place) and details fetched later (laps, splits). */
+  updateActivity(id: string, patch: Partial<Pick<Activity, 'title' | 'type' | 'locationName' | 'laps' | 'splits' | 'detailsAt'>>): Promise<void>;
   deleteActivity(id: string): Promise<void>;
   /** Remove everything that came from one source (e.g. after disconnecting Strava). Returns how many. */
   deleteBySource(source: Activity['source']): Promise<number>;

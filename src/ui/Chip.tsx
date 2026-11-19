@@ -51,7 +51,9 @@ export function Chip({ label, variant = 'action', icon: Icon, selected = false, 
       // react-native-web has no toggle role: a button with aria-pressed is the web equivalent
       {...(variant === 'toggle' && Platform.OS === 'web' ? ({ 'aria-pressed': selected } as object) : {})}
       accessibilityLabel={label}
-      accessibilityState={{ disabled: !!disabled, selected: variant === 'toggle' ? selected : undefined }}
+      aria-disabled={!!disabled}
+      // iOS reads the selected state; web uses aria-pressed (above), the right state for a toggle button
+      aria-selected={variant === 'toggle' && Platform.OS !== 'web' ? selected : undefined}
       style={({ pressed }) => [box, stateStyle(pressed, disabled)]}>
       {body}
     </Pressable>
