@@ -50,6 +50,7 @@
     "react-native-worklets": "0.13.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
@@ -64,17 +65,20 @@
     "android": "expo start --android",
     "web": "npm run web:setup && expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p e2e",
     "tokens": "node scripts/build-tokens.mjs",
     "test": "jest",
-    "web:setup": "node -e \"require('fs').mkdirSync('public',{recursive:true});require('fs').copyFileSync(require.resolve('canvaskit-wasm/bin/full/canvaskit.wasm'),'public/canvaskit.wasm')\""
+    "web:setup": "node -e \"require('fs').mkdirSync('public',{recursive:true});require('fs').copyFileSync(require.resolve('canvaskit-wasm/bin/full/canvaskit.wasm'),'public/canvaskit.wasm')\"",
+    "build": "npm run web:setup && expo export -p web",
+    "e2e": "playwright test --trace off"
   },
   "private": true,
   "jest": {
     "preset": "jest-expo",
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/.claude/"
+      "/.claude/",
+      "/e2e/"
     ]
   }
 }

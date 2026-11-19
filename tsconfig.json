@@ -23,6 +23,8 @@
   "exclude": [
     "node_modules",
     "dist",
-    "supabase/functions/*/index.ts"
+    "supabase/functions/*/index.ts",
+    "e2e",
+    "playwright.config.ts"
   ]
 }

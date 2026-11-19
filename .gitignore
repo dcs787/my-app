@@ -50,3 +50,5 @@ example
 # Skia web runtime, copied by `npm run web:setup`
 public/canvaskit.wasm
 .env
+test-results/
+playwright-report/
