@@ -30,3 +30,30 @@ test('stickers an activity cannot fill say why', async ({ page }) => {
   await page.getByRole('button', { name: 'Add a sticker' }).click();
   await expect(page.getByRole('button', { name: 'Route, unavailable: No route', exact: true })).toBeDisabled();
 });
+
+test('choose which stats a sticker shows, in order', async ({ page }) => {
+  await openEditor(page);
+  await page.getByRole('button', { name: 'Layers' }).click();
+  await page.getByRole('button', { name: /^Three stats.*Select$/ }).click();
+  await page.getByRole('button', { name: 'Choose stats' }).click();
+
+  const chip = (name: RegExp) => page.getByRole('button', { name });
+  await expect(chip(/^3\s+Time$/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Back to the default' })).toBeDisabled();
+
+  await chip(/^3\s+Time$/).click(); // take Time off
+  await chip(/^Max HR$/).click(); // Max HR goes on the end
+  await expect(chip(/^3\s+Max HR$/)).toHaveAttribute('aria-pressed', 'true');
+
+  await chip(/^Climb$/).click(); // full: nothing changes, and it says why
+  await expect(page.getByText('This sticker fits 3. Tap one to take it off first.')).toBeVisible();
+  await expect(chip(/^Climb$/)).toHaveAttribute('aria-pressed', 'false');
+
+  await chip(/^1\s+Distance$/).click(); // the rest move up
+  await expect(chip(/^1\s+Pace$/)).toBeVisible();
+  await expect(chip(/^2\s+Max HR$/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Back to the default' }).click();
+  await expect(chip(/^1\s+Distance$/)).toBeVisible();
+  await expect(chip(/^3\s+Time$/)).toBeVisible();
+});

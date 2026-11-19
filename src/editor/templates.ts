@@ -12,6 +12,7 @@ import {
 } from '@/domain/format';
 import { decodePolyline, projectToBox, trimEnds } from '@/domain/geo';
 import { computeTotals, countLabel, type Period, type Totals } from '@/domain/totals';
+import type { StatKey } from '@/domain/composition';
 import type { Activity, Units } from '@/domain/types';
 
 import type { Shape } from './shapes';
@@ -23,6 +24,8 @@ export type TemplateInput = {
   totals?: Record<Period, Totals>;
   /** the words, for the free text sticker */
   text?: string;
+  /** stats the person chose for this sticker, in order */
+  stats?: StatKey[];
 };
 export type Need = 'route' | 'splits' | 'distance' | 'time' | 'hr' | 'climb' | 'calories';
 
@@ -34,6 +37,8 @@ export type TemplateDef = {
   needs?: Need[];
   /** natural size in canvas px (canvas is 1080 x 1920) */
   size: { w: number; h: number };
+  /** how many stats it shows, for stickers where the person can choose them */
+  maxStats?: number;
   render(input: TemplateInput): Shape[];
 };
 
@@ -50,6 +55,7 @@ export function statValues({ activity: a, units }: TemplateInput) {
     climb: formatElevation(a.elevationGainM, units),
     climbUnit: unitLabel.elevation(units),
     hr: a.avgHr != null ? String(a.avgHr) : null,
+    maxHr: a.maxHr != null ? String(a.maxHr) : null,
     calories: a.calories != null ? String(a.calories) : null,
   };
 }
@@ -87,23 +93,44 @@ function totalHeadline(t: Totals, units: Units): string {
   return formatDuration(t.movingTimeS) ?? '0:00';
 }
 
-type Stat = { label: string; value: string; unit?: string };
+type Cell = { label: string; value: string; unit?: string };
+type Stat = Cell & { key: StatKey };
 
-function presentStats(input: TemplateInput, max: number): Stat[] {
+/** The order stat stickers use until someone picks their own. Max HR is opt-in. */
+export const DEFAULT_STAT_ORDER: StatKey[] = ['distance', 'pace', 'time', 'climb', 'hr', 'calories'];
+
+/** Every stat this activity has a value for, in the standard order. */
+export function availableStats(input: TemplateInput): Stat[] {
   const v = statValues(input);
   const all: (Stat | null)[] = [
-    v.distance ? { label: 'Distance', value: v.distance, unit: v.distanceUnit } : null,
-    v.pace ? { label: v.paceLabel, value: v.pace, unit: v.paceUnit } : null,
-    v.time ? { label: 'Time', value: v.time } : null,
-    v.climb ? { label: 'Climb', value: v.climb, unit: v.climbUnit } : null,
-    v.hr ? { label: 'Avg HR', value: v.hr, unit: 'bpm' } : null,
-    v.calories ? { label: 'Calories', value: v.calories } : null,
+    v.distance ? { key: 'distance', label: 'Distance', value: v.distance, unit: v.distanceUnit } : null,
+    v.pace ? { key: 'pace', label: v.paceLabel, value: v.pace, unit: v.paceUnit } : null,
+    v.time ? { key: 'time', label: 'Time', value: v.time } : null,
+    v.climb ? { key: 'climb', label: 'Climb', value: v.climb, unit: v.climbUnit } : null,
+    v.hr ? { key: 'hr', label: 'Avg HR', value: v.hr, unit: 'bpm' } : null,
+    v.maxHr ? { key: 'maxHr', label: 'Max HR', value: v.maxHr, unit: 'bpm' } : null,
+    v.calories ? { key: 'calories', label: 'Calories', value: v.calories } : null,
   ];
-  return all.filter((s): s is Stat => s != null).slice(0, max);
+  return all.filter((s): s is Stat => s != null);
+}
+
+/**
+ * The stats a sticker shows: the person's choice in their order, skipping any
+ * this activity lacks, or the default order when they haven't chosen (or none
+ * of their choice is available).
+ */
+export function presentStats(input: TemplateInput, max: number): Stat[] {
+  const have = availableStats(input);
+  const byKey = new Map(have.map((s) => [s.key, s]));
+  const chosen = (input.stats ?? []).map((k) => byKey.get(k)).filter((s): s is Stat => s != null);
+  if (chosen.length) return chosen.slice(0, max);
+  return DEFAULT_STAT_ORDER.map((k) => byKey.get(k))
+    .filter((s): s is Stat => s != null)
+    .slice(0, max);
 }
 
 /** Label above value. `width` is the cell width: both lines shrink to fit inside it. */
-function statCell(s: Stat, x: number, y: number, valueSize: number, width: number, align: 'left' | 'center' = 'left'): Shape[] {
+function statCell(s: Cell, x: number, y: number, valueSize: number, width: number, align: 'left' | 'center' = 'left'): Shape[] {
   const maxWidth = width - 24;
   return [
     { kind: 'text', text: s.label, x, y, size: valueSize * 0.3, face: 'label', caps: true, opacity: 0.75, align, maxWidth },
@@ -140,6 +167,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: 'Three stats',
     category: 'activity',
     size: { w: 960, h: 200 },
+    maxStats: 3,
     render(input) {
       const stats = presentStats(input, 3);
       const col = 960 / Math.max(stats.length, 1);
@@ -151,6 +179,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: 'Stat grid',
     category: 'activity',
     size: { w: 900, h: 510 },
+    maxStats: 6,
     render(input) {
       const stats = presentStats(input, 6);
       return stats.flatMap((s, i) => statCell(s, (i % 2) * 470 + 10, 60 + Math.floor(i / 2) * 160, 96, 450));
@@ -172,6 +201,7 @@ export const TEMPLATES: TemplateDef[] = [
     category: 'activity',
     needs: ['route'],
     size: { w: 760, h: 900 },
+    maxStats: 3,
     render(input) {
       const stats = presentStats(input, 3);
       const col = 760 / Math.max(stats.length, 1);
@@ -319,6 +349,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: 'Stat list',
     category: 'activity',
     size: { w: 760, h: 520 },
+    maxStats: 5,
     render(input) {
       const stats = presentStats(input, 5);
       const rowH = 100;
@@ -337,6 +368,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: 'Stacked',
     category: 'activity',
     size: { w: 760, h: 640 },
+    maxStats: 3,
     render(input) {
       const stats = presentStats(input, 3);
       return stats.flatMap((s, i): Shape[] => {
@@ -353,6 +385,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: 'One line',
     category: 'activity',
     size: { w: 980, h: 150 },
+    maxStats: 3,
     render(input) {
       const line = presentStats(input, 3)
         .map((s) => (s.unit ? `${s.value} ${s.unit}` : s.value))
@@ -384,6 +417,7 @@ export const TEMPLATES: TemplateDef[] = [
     category: 'activity',
     needs: ['route'],
     size: { w: 960, h: 420 },
+    maxStats: 3,
     render(input) {
       const stats = presentStats(input, 3);
       return [
@@ -484,7 +518,7 @@ export const TEMPLATES: TemplateDef[] = [
     size: { w: 960, h: 270 },
     render(input) {
       const t = tot(input, 'week');
-      const cells: Stat[] = [
+      const cells: Cell[] = [
         { label: t.family === 'other' ? 'Workouts' : `${countLabel(t).split(' ')[1]}`, value: String(t.count) },
         { label: 'Distance', value: formatDistance(t.distanceM, input.units) ?? '0', unit: unitLabel.distance(input.units) },
         { label: 'Time', value: formatDuration(t.movingTimeS) ?? '0:00' },

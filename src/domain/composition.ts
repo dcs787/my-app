@@ -6,6 +6,11 @@ export type FontId = 'inter' | 'display' | 'serif' | 'mono' | 'condensed';
 
 export const FONT_IDS: FontId[] = ['inter', 'display', 'serif', 'mono', 'condensed'];
 
+/** The stats a stat sticker can show, in the order the person picks. */
+export type StatKey = 'distance' | 'pace' | 'time' | 'climb' | 'hr' | 'maxHr' | 'calories';
+
+export const STAT_KEYS: StatKey[] = ['distance', 'pace', 'time', 'climb', 'hr', 'maxHr', 'calories'];
+
 export type Background =
   | { kind: 'photo'; uri: string; width: number; height: number }
   | { kind: 'solid'; colour: string }
@@ -25,6 +30,8 @@ export type CanvasElement = {
   font: FontId;
   /** free text for the text element */
   text?: string;
+  /** stats chosen for a stat sticker, in order; the template's default when absent */
+  stats?: StatKey[];
 };
 
 export type Composition = {

@@ -67,3 +67,16 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
 
 - Background delivery actually waking the app after a Watch workout.
 - Clipboard paste into Instagram (iOS pasteboard image).
+
+## Fix 3: pick the stats on a sticker (2026-11-19)
+
+- The 7 stat stickers (three stats, stat grid, stat list, stacked, one line,
+  route and stats, route beside stats) have a "Choose stats" button. Tap
+  stats in the order you want them, up to what the sticker fits; it says so
+  when full. Max HR is available here but stays out of the default.
+- The choice is saved on the sticker; stats the activity lacks are skipped,
+  and "Back to the default" clears it.
+- Accessibility fix found by the new test: toggle chips (units, sport type,
+  stats) had no role on web. They are now buttons with aria-pressed there;
+  iOS keeps the native toggle role.
+- 83 unit tests, 12 e2e tests.

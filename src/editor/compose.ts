@@ -1,4 +1,4 @@
-import { CANVAS, DEFAULT_BACKGROUND, type CanvasElement, type Composition, type FontId } from '@/domain/composition';
+import { CANVAS, DEFAULT_BACKGROUND, type CanvasElement, type Composition, type FontId, type StatKey } from '@/domain/composition';
 import type { Activity } from '@/domain/types';
 
 import { templateById, unavailableReason } from './templates';
@@ -137,3 +137,14 @@ export function elementAt(elements: CanvasElement[], x: number, y: number, slop 
 }
 
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/**
+ * Tap a stat on or off in a stat sticker's list. A tapped-on stat goes to the
+ * end, so the order is the order of taps. Returns null when the sticker is
+ * already full, so the screen can say why nothing happened.
+ */
+export function toggleStat(current: StatKey[], key: StatKey, max: number): StatKey[] | null {
+  if (current.includes(key)) return current.filter((k) => k !== key);
+  if (current.length >= max) return null;
+  return [...current, key];
+}

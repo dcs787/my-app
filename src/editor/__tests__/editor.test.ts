@@ -1,9 +1,9 @@
 import { sampleActivities } from '@/data/samples';
 import type { Activity } from '@/domain/types';
 
-import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, updateElement, MAX_SCALE } from '../compose';
+import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, toggleStat, updateElement, MAX_SCALE } from '../compose';
 import type { Shape } from '../shapes';
-import { statValues, TEMPLATES, unavailableReason } from '../templates';
+import { availableStats, presentStats, statValues, templateById, TEMPLATES, unavailableReason } from '../templates';
 
 const now = Date.UTC(2026, 10, 18, 12);
 const [run, , ride, treadmill] = sampleActivities(now).map(
@@ -127,5 +127,51 @@ describe('composition', () => {
     const rotated = [{ ...base, id: 'r', templateId: 'stat-row', rotation: Math.PI / 2 }]; // 960 x 200, now vertical
     expect(elementAt(rotated, 540, 960 + 400)?.id).toBe('r');
     expect(elementAt(rotated, 540 + 400, 960)).toBeNull();
+  });
+});
+
+describe('chosen stats', () => {
+  const withMax: Activity = { ...run, avgHr: 158, maxHr: 181 };
+  const texts = (shapes: Shape[]) =>
+    shapes.filter((s): s is Extract<Shape, { kind: 'text' }> => s.kind === 'text').map((s) => s.text);
+
+  it('uses the default order until someone chooses, with max HR opt-in', () => {
+    const keys = presentStats({ activity: withMax, units: 'km' }, 6).map((s) => s.key);
+    expect(keys).toEqual(['distance', 'pace', 'time', 'climb', 'hr']);
+    expect(availableStats({ activity: withMax, units: 'km' }).map((s) => s.key)).toContain('maxHr');
+  });
+
+  it('shows the chosen stats in the chosen order, up to the sticker size', () => {
+    const input = { activity: withMax, units: 'km' as const, stats: ['maxHr', 'time', 'distance', 'pace'] as const };
+    expect(presentStats({ ...input, stats: [...input.stats] }, 3).map((s) => s.label)).toEqual(['Max HR', 'Time', 'Distance']);
+    const row = templateById('stat-row')!;
+    expect(texts(row.render({ ...input, stats: ['maxHr', 'time'] }))).toEqual(['Max HR', '181 bpm', 'Time', expect.any(String)]);
+  });
+
+  it('skips chosen stats the activity lacks, and falls back when none are left', () => {
+    const noHr: Activity = { ...run, avgHr: null, maxHr: null };
+    expect(presentStats({ activity: noHr, units: 'km', stats: ['maxHr', 'time'] }, 3).map((s) => s.key)).toEqual(['time']);
+    expect(presentStats({ activity: noHr, units: 'km', stats: ['maxHr'] }, 3).map((s) => s.key)).toEqual(['distance', 'pace', 'time']);
+  });
+
+  it('every stat sticker says how many it fits', () => {
+    for (const tid of ['stat-row', 'stat-grid', 'stat-list', 'ticker', 'stacked-numbers', 'route-card', 'route-side']) {
+      expect(templateById(tid)?.maxStats).toBeGreaterThan(0);
+    }
+    expect(templateById('big-distance')?.maxStats).toBeUndefined();
+  });
+
+  it('toggles in tap order and refuses when full', () => {
+    expect(toggleStat(['distance', 'pace'], 'hr', 3)).toEqual(['distance', 'pace', 'hr']);
+    expect(toggleStat(['distance', 'pace', 'hr'], 'pace', 3)).toEqual(['distance', 'hr']);
+    expect(toggleStat(['distance', 'pace', 'hr'], 'time', 3)).toBeNull();
+  });
+
+  it('keeps the choice on the element through updates', () => {
+    const c = defaultComposition(run, id, style);
+    const row = c.elements.find((e) => e.templateId === 'stat-row')!;
+    const next = updateElement(c, row.id, { stats: ['time', 'distance'] });
+    expect(next.elements.find((e) => e.id === row.id)?.stats).toEqual(['time', 'distance']);
+    expect(JSON.parse(JSON.stringify(updateElement(next, row.id, { stats: undefined }))).elements.find((e: { id: string }) => e.id === row.id).stats).toBeUndefined();
   });
 });

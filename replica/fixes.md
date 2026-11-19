@@ -92,7 +92,7 @@ Evidence × cheapness, top first. Each is now a row in `features.csv`
 | --- | --- | --- | --- | --- |
 | 1 | **Sync you can see**: "Syncing…" and "Updated 2 min ago" on the list, a toast when a background sync adds a workout, and a "Missing a workout?" sheet that checks Health permission and Strava connection | S | replica-build | sync, 11 reviews |
 | 2 | **Help and feedback in the app**: short FAQ plus "Email us" pre-filled with app version and device | S | replica-build | support, 4 |
-| 3 | **Pick the stats on a sticker**: stat grid, three stats, stat list and one-line stickers let you choose which stats appear and in what order (incl. max HR) | M | replica-build | customise, 6 |
+| 3 | **Done.** **Pick the stats on a sticker**: stat grid, three stats, stat list and one-line stickers let you choose which stats appear and in what order (incl. max HR) | M | replica-build | customise, 6 |
 | 4 | **Watch laps for splits**: use laps from FIT files and Strava's laps when present, GPS splits otherwise, and say which | M | replica-backend | accuracy, 5 (+1) |
 | 5 | **Speed budget for the editor**: test with 15 stickers on an older iPhone; no crash or freeze adding elements; crash reporting before launch | S | replica-test | stability, 8 |
 | 6 | **Small app, no watermark**: keep the download under ~60 MB (check each build); never force a watermark | S | replica-launch | footprint 4, watermark 2 |

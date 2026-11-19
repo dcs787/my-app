@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Pressable, View, type GestureResponderEvent } from 'react-native';
+import { Platform, Pressable, View, type GestureResponderEvent } from 'react-native';
 
 import { colors, radius } from '@/theme';
 
@@ -47,7 +47,9 @@ export function Chip({ label, variant = 'action', icon: Icon, selected = false, 
       {...pressableProps}
       disabled={disabled}
       hitSlop={6}
-      accessibilityRole={variant === 'toggle' ? 'togglebutton' : 'button'}
+      accessibilityRole={variant === 'toggle' && Platform.OS !== 'web' ? 'togglebutton' : 'button'}
+      // react-native-web has no toggle role: a button with aria-pressed is the web equivalent
+      {...(variant === 'toggle' && Platform.OS === 'web' ? ({ 'aria-pressed': selected } as object) : {})}
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled, selected: variant === 'toggle' ? selected : undefined }}
       style={({ pressed }) => [box, stateStyle(pressed, disabled)]}>

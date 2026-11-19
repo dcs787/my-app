@@ -1,14 +1,14 @@
 import { Canvas, Group, useImage } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, ListOrdered, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useActivities, useActivity, useSettings, useStore } from '@/data';
-import { CANVAS, FONT_IDS, type Background, type Composition } from '@/domain/composition';
+import { CANVAS, FONT_IDS, type Background, type Composition, type StatKey } from '@/domain/composition';
 import { computeTotals, type Period, type Totals } from '@/domain/totals';
 import type { Activity, Units } from '@/domain/types';
 import {
@@ -20,6 +20,7 @@ import {
   defaultComposition,
   elementAt,
   removeElement,
+  toggleStat,
   updateElement,
   type Style,
 } from './compose';
@@ -30,7 +31,7 @@ import { pickBackgroundPhoto } from './pickPhoto';
 import { Scene } from './Scene';
 import { LayersList } from './LayersList';
 import { TemplateGrid } from './TemplatePreview';
-import { TEMPLATES, TEXT_TEMPLATE_ID } from './templates';
+import { availableStats, presentStats, templateById, TEMPLATES, TEXT_TEMPLATE_ID } from './templates';
 import { colors, motion, radius } from '@/theme';
 import { Button, Chip, EmptyState, IconButton, SegmentedTabs, Sheet, Swatches, Text, TextField, useToast } from '@/ui';
 
@@ -91,7 +92,7 @@ function EditorLoader({ activityId }: { activityId: string }) {
   return <Editor activity={activity} units={settings.units} fonts={fonts} initial={draft} />;
 }
 
-type Panel = 'templates' | 'background' | 'colour' | 'text' | 'layers' | null;
+type Panel = 'templates' | 'background' | 'colour' | 'text' | 'layers' | 'stats' | null;
 
 function Editor({ activity, units, fonts, initial }: { activity: Activity; units: Units; fonts: TemplateFonts; initial: Draft }) {
   const store = useStore();
@@ -118,6 +119,10 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     }),
     [allActivities, activity],
   );
+  const maxStats = (selected && templateById(selected.templateId)?.maxStats) || 0;
+  const statInput = { activity, units, totals, stats: selected?.stats };
+  const statChoices = maxStats ? availableStats(statInput) : [];
+  const shownStats: StatKey[] = maxStats ? presentStats(statInput, maxStats).map((s) => s.key) : [];
   const photo = useImage(doc.background.kind === 'photo' ? doc.background.uri : null);
   const scale = area.w && area.h ? Math.min(area.w / CANVAS.w, area.h / CANVAS.h) : 0;
   const style: Style = selected ? { colour: selected.colour, font: selected.font } : { colour: '#FFFFFF', font: initial.elements[0]?.font ?? 'inter' };
@@ -237,6 +242,14 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     rememberStyle({ colour });
   }
 
+  function tapStat(key: StatKey) {
+    if (!selected || !maxStats) return;
+    const next = toggleStat(shownStats, key, maxStats);
+    if (!next) return toast(`This sticker fits ${maxStats}. Tap one to take it off first.`);
+    if (!next.length) return toast('Keep at least one stat');
+    setDoc((d) => updateElement(d, selected.id, { stats: next }));
+  }
+
   function setBackground(background: Background) {
     setDoc((d) => ({ ...d, background }));
   }
@@ -315,6 +328,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         {selected && (
           <View style={styles.rail}>
             {selected.templateId === TEXT_TEMPLATE_ID && <IconButton icon={PenLine} label="Edit text" onPress={editText} />}
+            {maxStats > 0 && <IconButton icon={ListOrdered} label="Choose stats" onPress={() => setPanel('stats')} />}
             <IconButton icon={Type} label={`Font: ${FONT_NAMES[selected.font]}. Change font`} onPress={cycleFont} />
             <IconButton icon={Palette} label="Colour" onPress={() => setPanel('colour')} />
             <IconButton
@@ -410,6 +424,35 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
         />
       </Sheet>
 
+      <Sheet open={panel === 'stats'} onClose={() => setPanel(null)} title="Stats on this sticker">
+        <View style={{ paddingHorizontal: 16, gap: 16 }}>
+          <Text variant="sm" color="textMuted">
+            {`Tap them in the order you want. Up to ${maxStats}.`}
+          </Text>
+          <View style={styles.statChips}>
+            {statChoices.map((s) => {
+              const n = shownStats.indexOf(s.key);
+              return (
+                <Chip
+                  key={s.key}
+                  variant="toggle"
+                  selected={n >= 0}
+                  label={n >= 0 ? `${n + 1}  ${s.label}` : s.label}
+                  onPress={() => tapStat(s.key)}
+                />
+              );
+            })}
+          </View>
+          <Button
+            label="Back to the default"
+            variant="secondary"
+            fullWidth
+            disabled={!selected?.stats}
+            onPress={() => selected && setDoc((d) => updateElement(d, selected.id, { stats: undefined }))}
+          />
+        </View>
+      </Sheet>
+
       <Sheet open={panel === 'colour'} onClose={() => setPanel(null)} title="Sticker colour">
         <Swatches value={selected?.colour ?? '#FFFFFF'} onChange={setColour} />
       </Sheet>
@@ -492,4 +535,5 @@ const styles = StyleSheet.create({
   bgGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   bgSwatch: { width: 64, height: 112, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border },
   tileGrid: { padding: 16, alignItems: 'center' },
+  statChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 });
