@@ -36,11 +36,11 @@ Direct messages,social,skip,yes,skip,later phase (S14)
 Sync workouts from Apple Health (incl. Apple Watch),data,must,yes,yes,"anchored sync, deletions, time zones; needs a dev build; device check pending"
 Their template designs fonts and branding,brand,skip,yes,skip,owned by the original; rebuilt fresh
 Background sync of new Apple Health workouts,data,should,no,yes,HealthKit background delivery; device check pending
-"Sync status, last-updated time and missing-workout help",data,should,no,no,"fix 1: sync complaints (11 reviews, 1 source)"
-In-app help and feedback,platform,should,no,no,fix 2: support complaints (4)
+"Sync status, last-updated time and missing-workout help",data,should,no,yes,list shows syncing / updated-ago; Missing a workout? sheet; background-sync toast
+In-app help and feedback,platform,should,no,yes,Help screen: 6 answers + Email us (EXPO_PUBLIC_SUPPORT_EMAIL)
 Choose which stats a sticker shows,templates,should,no,no,fix 3: customise requests (6)
 "Watch laps for splits (FIT laps, Strava laps)",data,should,no,no,fix 4: accuracy complaints (5+1)
 Editor speed budget and crash reporting,platform,should,no,no,fix 5: stability complaints (8)
-"Small download, never a forced watermark",platform,should,no,no,"fix 6: footprint 4, watermark 2"
-"More sport types (skate, ski, row, climb...)",data,could,no,no,fix 7: thin
+"Small download, never a forced watermark",platform,should,no,partial,no watermark anywhere; download size to measure on the first production build
+"More sport types (skate, ski, row, climb...)",data,could,no,yes,"skate, ski, row, climb from Health, Strava, files"
 Arabic-capable font,templates,could,no,no,fix 8: thin

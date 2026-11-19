@@ -31,13 +31,22 @@ const TYPES: Record<number, ActivityType> = {
   24: 'hike', // hiking
   13: 'ride', // cycling
   46: 'swim', // swimming
+  39: 'skate', // skatingSports
+  60: 'ski', // crossCountrySkiing
+  61: 'ski', // downhillSkiing
+  67: 'ski', // snowboarding
+  40: 'ski', // snowSports
+  9: 'climb', // climbing
+  71: 'run', // wheelchairRunPace
+  70: 'walk', // wheelchairWalkPace
+  74: 'ride', // handCycling
   20: 'workout', // functionalStrengthTraining
   50: 'workout', // traditionalStrengthTraining
   57: 'workout', // yoga
   63: 'workout', // highIntensityIntervalTraining
   73: 'workout', // mixedCardio
   16: 'workout', // elliptical
-  35: 'workout', // rowing
+  35: 'row', // rowing
 };
 
 export function mapHealthWorkout(w: HealthWorkout): NewActivity {

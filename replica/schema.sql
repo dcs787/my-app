@@ -62,7 +62,7 @@ create table activities (
   external_id text,                     -- provider id; null for files/manual
   file_hash text,                       -- sha-256 of an imported file
   type text not null default 'run'
-    check (type in ('run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'workout', 'other')),
+    check (type in ('run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'skate', 'ski', 'row', 'climb', 'workout', 'other')),
   title text not null default '' check (length(title) <= 120),
   location_name text,
   started_at timestamptz not null,

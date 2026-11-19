@@ -48,7 +48,7 @@ export const unitLabel = {
 };
 
 /** Rides show speed, everything on foot shows pace. */
-export const usesSpeed = (t: ActivityType) => t === 'ride';
+export const usesSpeed = (t: ActivityType) => t === 'ride' || t === 'ski' || t === 'skate';
 
 const TYPE_NOUN: Record<ActivityType, string> = {
   run: 'run',
@@ -57,6 +57,10 @@ const TYPE_NOUN: Record<ActivityType, string> = {
   hike: 'hike',
   ride: 'ride',
   swim: 'swim',
+  skate: 'skate',
+  ski: 'ski',
+  row: 'row',
+  climb: 'climb',
   workout: 'workout',
   other: 'activity',
 };

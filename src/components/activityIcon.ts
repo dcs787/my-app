@@ -1,4 +1,16 @@
-import { Activity, Bike, Dumbbell, Footprints, Mountain, WavesHorizontal, type LucideIcon } from 'lucide-react-native';
+import {
+  Activity,
+  Bike,
+  Dumbbell,
+  FlagTriangleRight,
+  Footprints,
+  Mountain,
+  MountainSnow,
+  Sailboat,
+  WavesHorizontal,
+  Wind,
+  type LucideIcon,
+} from 'lucide-react-native';
 
 import type { ActivityType } from '@/domain/types';
 
@@ -9,6 +21,10 @@ const ICONS: Record<ActivityType, LucideIcon> = {
   hike: Mountain,
   ride: Bike,
   swim: WavesHorizontal,
+  skate: Wind,
+  ski: MountainSnow,
+  row: Sailboat,
+  climb: FlagTriangleRight,
   workout: Dumbbell,
   other: Activity,
 };

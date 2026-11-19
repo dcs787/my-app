@@ -81,6 +81,10 @@ const NOUN: Record<SportFamily, [string, string]> = {
   walk: ['walk', 'walks'],
   ride: ['ride', 'rides'],
   swim: ['swim', 'swims'],
+  skate: ['skate', 'skates'],
+  ski: ['ski day', 'ski days'],
+  row: ['row', 'rows'],
+  climb: ['climb', 'climbs'],
   other: ['workout', 'workouts'],
 };
 

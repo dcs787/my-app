@@ -50,6 +50,7 @@ describe('Apple Health mapping', () => {
     const yoga = mapHealthWorkout(run({ activityType: 57, distanceM: undefined, route: [] }));
     expect(yoga).toMatchObject({ type: 'workout', distanceM: null });
     expect(mapHealthWorkout(run({ activityType: 9999 })).type).toBe('other');
+    expect([39, 61, 35, 9, 71].map((t) => mapHealthWorkout(run({ activityType: t })).type)).toEqual(['skate', 'ski', 'row', 'climb', 'run']);
   });
 
   it('works out time zone offsets, including half hours and unknown zones', () => {

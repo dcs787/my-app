@@ -56,6 +56,7 @@ describe('mapping', () => {
     expect(mapStravaActivity(act(1, { sport_type: 'TrailRun' })).type).toBe('trail_run');
     expect(mapStravaActivity(act(1, { sport_type: 'GravelRide', kilojoules: 812.4 }))).toMatchObject({ type: 'ride', calories: 812 });
     expect(mapStravaActivity(act(1, { sport_type: 'Kitesurf' })).type).toBe('other');
+    expect(['AlpineSki', 'InlineSkate', 'Rowing', 'RockClimbing'].map((t) => mapStravaActivity(act(1, { sport_type: t })).type)).toEqual(['ski', 'skate', 'row', 'climb']);
     const indoor = mapStravaActivity(act(1, { trainer: true, map: { summary_polyline: '' }, distance: 0 }));
     expect(indoor).toMatchObject({ routePolyline: null, distanceM: null });
   });

@@ -1,7 +1,7 @@
 import { activityFromGpx, activityFromManual, parseDuration } from '../import';
 import { decodePolyline, encodePolyline, haversine, projectToBox, simplify, trimEnds } from '../geo';
 import { formatDay, formatDistance, formatDuration, formatElevation, formatPace, defaultTitle } from '../format';
-import { GpxError, parseGpx } from '../gpx';
+import { GpxError, mapType, parseGpx } from '../gpx';
 import { computeSplits, computeStats, elevationGain } from '../stats';
 import { northTrack, toGpx } from '../__fixtures__/gpx';
 
@@ -64,6 +64,18 @@ describe('gpx', () => {
       { lat: 1, lon: 2 },
       { lat: 1.001, lon: 2 },
     ]);
+  });
+
+  it('maps exporters\u2019 sport names, including the newer sports', () => {
+    expect(mapType('trail_running')).toBe('trail_run');
+    expect(mapType('running')).toBe('run');
+    expect(mapType('inline_skating')).toBe('skate');
+    expect(mapType('cross_country_skiing')).toBe('ski');
+    expect(mapType('Snowboarding')).toBe('ski');
+    expect(mapType('rowing')).toBe('row');
+    expect(mapType('rock_climbing')).toBe('climb');
+    expect(mapType('Biking')).toBe('ride');
+    expect(mapType('kitesurfing')).toBe('other');
   });
 
   it('rejects files that are not GPX or have no points', () => {
