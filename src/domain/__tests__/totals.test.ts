@@ -48,3 +48,15 @@ it('sums the same sport in the same week, by local date', () => {
   expect(computeTotals(runs, runs[0], 'year', Date.parse('2027-03-01T00:00:00Z')).label).toBe('2026');
   expect(computeTotals(runs, runs[0], 'month', Date.parse('2027-03-01T00:00:00Z')).label).toBe('November 2026');
 });
+
+test('elliptical miles stay out of running totals', () => {
+  const list = [
+    act('2026-11-17T14:00:00Z', { type: 'run', distanceM: 5000 }),
+    act('2026-11-18T14:00:00Z', { type: 'elliptical', distanceM: 6000 }),
+    act('2026-11-19T14:00:00Z', { type: 'yoga' }),
+  ];
+  const now = Date.parse('2026-11-20T12:00:00Z');
+  expect(computeTotals(list, list[0], 'week', now)).toMatchObject({ count: 1, distanceM: 5000 });
+  expect(countLabel(computeTotals(list, list[1], 'week', now))).toBe('1 elliptical session');
+  expect(countLabel(computeTotals(list, list[2], 'week', now))).toBe('1 yoga session');
+});

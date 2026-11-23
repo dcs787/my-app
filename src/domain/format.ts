@@ -61,6 +61,8 @@ const TYPE_NOUN: Record<ActivityType, string> = {
   ski: 'ski',
   row: 'row',
   climb: 'climb',
+  yoga: 'yoga',
+  elliptical: 'elliptical',
   workout: 'workout',
   other: 'activity',
 };

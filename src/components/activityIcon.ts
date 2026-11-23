@@ -6,6 +6,8 @@ import {
   Footprints,
   Mountain,
   MountainSnow,
+  Orbit,
+  PersonStanding,
   Sailboat,
   WavesHorizontal,
   Wind,
@@ -25,6 +27,8 @@ const ICONS: Record<ActivityType, LucideIcon> = {
   ski: MountainSnow,
   row: Sailboat,
   climb: FlagTriangleRight,
+  yoga: PersonStanding,
+  elliptical: Orbit,
   workout: Dumbbell,
   other: Activity,
 };

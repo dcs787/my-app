@@ -9,7 +9,7 @@ import { activityFromManual, type ManualErrors } from '@/domain/import';
 import type { ActivityType } from '@/domain/types';
 import { Button, Chip, Text, TextField, useToast } from '@/ui';
 
-const TYPES: ActivityType[] = ['run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'skate', 'ski', 'row', 'climb', 'workout'];
+const TYPES: ActivityType[] = ['run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'skate', 'ski', 'row', 'climb', 'yoga', 'elliptical', 'workout'];
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const isoDay = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;

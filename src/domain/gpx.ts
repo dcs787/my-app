@@ -96,6 +96,8 @@ export function mapType(raw?: string): ActivityType | undefined {
   if (/ski|snowboard/.test(t)) return 'ski';
   if (/rowing|^row$|kayak|canoe|paddl/.test(t)) return 'row';
   if (/climb/.test(t)) return 'climb';
+  if (/yoga|pilates/.test(t)) return 'yoga';
+  if (/elliptic/.test(t)) return 'elliptical';
   if (/run|^9$/.test(t)) return 'run';
   if (/hik/.test(t)) return 'hike';
   if (/walk/.test(t)) return 'walk';

@@ -44,10 +44,11 @@ const TYPES: Record<number, ActivityType> = {
   74: 'ride', // handCycling
   20: 'workout', // functionalStrengthTraining
   50: 'workout', // traditionalStrengthTraining
-  57: 'workout', // yoga
+  57: 'yoga', // yoga
   63: 'workout', // highIntensityIntervalTraining
   73: 'workout', // mixedCardio
-  16: 'workout', // elliptical
+  16: 'elliptical', // elliptical
+  66: 'yoga', // pilates
   35: 'row', // rowing
 };
 

@@ -130,3 +130,10 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
   (JS 6.5 MB, assets 3 MB). The native part comes on top; read it from each
   EAS build or App Store Connect's file sizes (target: under 60 MB total).
 - No watermark anywhere, by design.
+
+## Fix 7: yoga and elliptical (2026-11-23)
+
+- Own types with icons, mapped from Apple Health (yoga, pilates,
+  elliptical), Strava (Yoga, Pilates, Elliptical) and files.
+- Each is its own family, so elliptical miles never count towards running
+  totals ("1 elliptical session", "3 yoga sessions").

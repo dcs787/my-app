@@ -71,7 +71,8 @@ describe('Apple Health mapping', () => {
     const tread = mapHealthWorkout(run({ route: [], indoor: true }));
     expect(tread).toMatchObject({ routePolyline: null, distanceM: 8050, splits: [] });
     const yoga = mapHealthWorkout(run({ activityType: 57, distanceM: undefined, route: [] }));
-    expect(yoga).toMatchObject({ type: 'workout', distanceM: null });
+    expect(yoga).toMatchObject({ type: 'yoga', distanceM: null });
+    expect([16, 66, 50].map((t) => mapHealthWorkout(run({ activityType: t })).type)).toEqual(['elliptical', 'yoga', 'workout']);
     expect(mapHealthWorkout(run({ activityType: 9999 })).type).toBe('other');
     expect([39, 61, 35, 9, 71].map((t) => mapHealthWorkout(run({ activityType: t })).type)).toEqual(['skate', 'ski', 'row', 'climb', 'run']);
   });

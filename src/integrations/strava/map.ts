@@ -38,8 +38,9 @@ const SPORT: Record<string, ActivityType> = {
   WeightTraining: 'workout',
   Crossfit: 'workout',
   HighIntensityIntervalTraining: 'workout',
-  Yoga: 'workout',
-  Pilates: 'workout',
+  Yoga: 'yoga',
+  Pilates: 'yoga',
+  Elliptical: 'elliptical',
 };
 
 /** Strava summary activity -> our activity. Route comes from Strava's summary polyline as is. */

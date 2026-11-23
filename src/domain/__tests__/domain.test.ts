@@ -70,6 +70,8 @@ describe('gpx', () => {
     expect(mapType('trail_running')).toBe('trail_run');
     expect(mapType('running')).toBe('run');
     expect(mapType('inline_skating')).toBe('skate');
+    expect(mapType('yoga')).toBe('yoga');
+    expect(mapType('elliptical')).toBe('elliptical');
     expect(mapType('cross_country_skiing')).toBe('ski');
     expect(mapType('Snowboarding')).toBe('ski');
     expect(mapType('rowing')).toBe('row');

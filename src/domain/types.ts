@@ -1,7 +1,7 @@
 /** Units are always SI (metres, seconds) in storage; convert only for display. */
 export type Units = 'mi' | 'km';
 
-export const ACTIVITY_TYPES = ['run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'skate', 'ski', 'row', 'climb', 'workout', 'other'] as const;
+export const ACTIVITY_TYPES = ['run', 'trail_run', 'walk', 'hike', 'ride', 'swim', 'skate', 'ski', 'row', 'climb', 'yoga', 'elliptical', 'workout', 'other'] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export const SOURCES = ['apple_health', 'strava', 'gpx', 'tcx', 'fit', 'manual'] as const;

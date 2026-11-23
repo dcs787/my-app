@@ -5,7 +5,7 @@ export const MERGE_WINDOW_MS = 2 * 60_000;
 /** How far apart their distances can be (GPS vs. watch vs. phone). */
 export const MERGE_DISTANCE_TOLERANCE = 0.03;
 
-export type SportFamily = 'run' | 'walk' | 'ride' | 'swim' | 'skate' | 'ski' | 'row' | 'climb' | 'other';
+export type SportFamily = 'run' | 'walk' | 'ride' | 'swim' | 'skate' | 'ski' | 'row' | 'climb' | 'yoga' | 'elliptical' | 'other';
 
 const FAMILY: Record<ActivityType, SportFamily> = {
   run: 'run',
@@ -18,6 +18,9 @@ const FAMILY: Record<ActivityType, SportFamily> = {
   ski: 'ski',
   row: 'row',
   climb: 'climb',
+  yoga: 'yoga',
+  // its own family: elliptical miles never count towards running totals
+  elliptical: 'elliptical',
   workout: 'other',
   other: 'other',
 };
