@@ -1,11 +1,13 @@
-import { Canvas, Group, useImage } from '@shopify/react-native-skia';
+import { Canvas, Group, useImage, type Transforms3d } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
 import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, ListOrdered, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';
+import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { useActivities, useActivity, useSettings, useStore } from '@/data';
 import { useStravaDetails } from '@/features/stravaDetails';
@@ -16,10 +18,18 @@ import {
   addElement,
   bringToFront,
   moveElement,
+  applyDelta,
+  boxAt,
   clamp,
   DEFAULT_STYLE,
   defaultComposition,
-  elementAt,
+  hitBoxes,
+  MAX_SCALE,
+  MAX_STICKERS,
+  MIN_SCALE,
+  NO_DELTA,
+  type Delta,
+  type HitBox,
   removeElement,
   toggleStat,
   updateElement,
@@ -137,53 +147,153 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
     return () => clearTimeout(t);
   }, [doc, store, toast]);
 
-  // ---- gestures (canvas coordinates = view coordinates / scale)
-  const docRef = useRef(doc);
-  const selRef = useRef(selectedId);
+  // ---- gestures, on the UI thread: a drag, pinch or twist moves the sticker
+  // through shared values without re-rendering React, and is saved to the
+  // design once, when the fingers lift.
+  const boxes = useSharedValue<HitBox[]>([]);
+  const selShared = useSharedValue<string | null>(null);
+  const viewScale = useSharedValue(scale);
   useEffect(() => {
-    docRef.current = doc;
-    selRef.current = selectedId;
+    boxes.set(hitBoxes(doc.elements));
+    selShared.set(selectedId);
+    viewScale.set(scale);
+  }, [doc.elements, selectedId, scale, boxes, selShared, viewScale]);
+
+  const [liveId, setLiveId] = useState<string | null>(null);
+  const live = useSharedValue<string | null>(null); // the sticker being transformed
+  const base = useSharedValue<HitBox | null>(null); // that sticker before the gesture
+  const delta = useSharedValue<Delta>(NO_DELTA);
+  const touches = useSharedValue(0); // gestures in progress
+  const panHit = useSharedValue<string | null>(null);
+  const panMoved = useSharedValue(false);
+
+  const liveTransform = useDerivedValue<Transforms3d>(() => {
+    const b = base.get();
+    const d = delta.get();
+    if (!b) return [];
+    return [
+      { translateX: b.x + d.tx },
+      { translateY: b.y + d.ty },
+      { rotate: d.rotation },
+      { scale: d.scale },
+      { translateX: -b.x },
+      { translateY: -b.y },
+    ];
   });
-  const drag = useRef<{ id: string | null; moved: boolean }>({ id: null, moved: false });
+
+  const pendingReset = useRef(false);
+  const commit = useCallback((id: string, d: Delta) => {
+    pendingReset.current = true;
+    setDoc((cur) => {
+      const el = cur.elements.find((x) => x.id === id);
+      return el ? updateElement(cur, id, applyDelta(el, d)) : cur;
+    });
+  }, []);
+  // clear the live offset only once React has drawn the sticker in its new place
+  useLayoutEffect(() => {
+    if (!pendingReset.current) return;
+    pendingReset.current = false;
+    delta.set(NO_DELTA);
+    base.set(live.get() ? (hitBoxes(doc.elements).find((b) => b.id === live.get()) ?? null) : null);
+  }, [doc.elements, delta, base, live]);
+
+  const startLive = (box: HitBox) => {
+    'worklet';
+    if (live.get() === box.id) return;
+    live.set(box.id);
+    base.set(box);
+    delta.set(NO_DELTA);
+    scheduleOnRN(setLiveId, box.id);
+  };
+  const began = () => {
+    'worklet';
+    touches.set(touches.get() + 1);
+  };
+  const finished = () => {
+    'worklet';
+    touches.set(Math.max(0, touches.get() - 1));
+    if (touches.get() > 0) return;
+    const d = delta.get();
+    const id = live.get();
+    if (id && (d.tx !== 0 || d.ty !== 0 || d.scale !== 1 || d.rotation !== 0)) scheduleOnRN(commit, id, d);
+    if (!panHit.get() && !panMoved.get()) scheduleOnRN(setSelectedId, null); // a tap on empty canvas
+    panHit.set(null);
+    panMoved.set(false);
+  };
 
   const pan = usePanGesture({
-    runOnJS: true,
     maxPointers: 1,
     onBegin: (e) => {
-      const hit = elementAt(docRef.current.elements, e.x / scale, e.y / scale);
-      drag.current = { id: hit?.id ?? null, moved: false };
-      if (hit) setSelectedId(hit.id);
+      'worklet';
+      began();
+      const hit = boxAt(boxes.get(), e.x / viewScale.get(), e.y / viewScale.get());
+      panHit.set(hit?.id ?? null);
+      panMoved.set(false);
+      if (hit) {
+        startLive(hit);
+        scheduleOnRN(setSelectedId, hit.id);
+      }
     },
     onUpdate: (e) => {
-      const id = drag.current.id;
-      if (!id) return;
-      drag.current.moved = true;
-      setDoc((d) => {
-        const el = d.elements.find((x) => x.id === id);
-        if (!el) return d;
-        return updateElement(d, id, {
-          x: clamp(el.x + e.changeX / scale, 0, CANVAS.w),
-          y: clamp(el.y + e.changeY / scale, 0, CANVAS.h),
-        });
+      'worklet';
+      const b = base.get();
+      if (!panHit.get() || live.get() !== panHit.get() || !b) return;
+      panMoved.set(true);
+      const d = delta.get();
+      const k = viewScale.get();
+      delta.set({
+        ...d,
+        tx: clamp(b.x + d.tx + e.changeX / k, 0, CANVAS.w) - b.x,
+        ty: clamp(b.y + d.ty + e.changeY / k, 0, CANVAS.h) - b.y,
       });
     },
     onFinalize: () => {
-      if (!drag.current.id && !drag.current.moved) setSelectedId(null); // tap on empty canvas
-      drag.current = { id: null, moved: false };
+      'worklet';
+      finished();
     },
   });
+  const selectedBox = () => {
+    'worklet';
+    const id = selShared.get();
+    if (!id) return null;
+    for (const b of boxes.get()) if (b.id === id) return b;
+    return null;
+  };
   const pinch = usePinchGesture({
-    runOnJS: true,
+    onBegin: () => {
+      'worklet';
+      began();
+    },
     onUpdate: (e) => {
-      const id = selRef.current;
-      if (id) setDoc((d) => updateElement(d, id, { scale: (d.elements.find((x) => x.id === id)?.scale ?? 1) * e.scaleChange }));
+      'worklet';
+      const box = selectedBox();
+      if (!box) return;
+      startLive(box);
+      const b = base.get()!;
+      const d = delta.get();
+      const next = clamp(b.scale * d.scale * e.scaleChange, MIN_SCALE, MAX_SCALE);
+      delta.set({ ...d, scale: next / b.scale });
+    },
+    onFinalize: () => {
+      'worklet';
+      finished();
     },
   });
   const rotate = useRotationGesture({
-    runOnJS: true,
+    onBegin: () => {
+      'worklet';
+      began();
+    },
     onUpdate: (e) => {
-      const id = selRef.current;
-      if (id) setDoc((d) => updateElement(d, id, { rotation: (d.elements.find((x) => x.id === id)?.rotation ?? 0) + e.rotationChange }));
+      'worklet';
+      const box = selectedBox();
+      if (!box) return;
+      startLive(box);
+      delta.set({ ...delta.get(), rotation: delta.get().rotation + e.rotationChange });
+    },
+    onFinalize: () => {
+      'worklet';
+      finished();
     },
   });
   const gestures = useSimultaneousGestures(pan, pinch, rotate);
@@ -194,6 +304,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
   }, [store]);
 
   function add(templateId: string) {
+    if (doc.elements.length >= MAX_STICKERS) return toast(`A story holds up to ${MAX_STICKERS} stickers. Delete one to add another.`);
     const r = addElement(doc, templateId, randomUUID, style, activity);
     if (!r.element) return;
     setDoc(r.composition);
@@ -203,6 +314,7 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
 
   /** Add an empty text sticker and open the keyboard for it. */
   function addText() {
+    if (doc.elements.length >= MAX_STICKERS) return toast(`A story holds up to ${MAX_STICKERS} stickers. Delete one to add another.`);
     const r = addElement(doc, TEXT_TEMPLATE_ID, randomUUID, style, activity);
     if (!r.element) return;
     setDoc(r.composition);
@@ -321,7 +433,16 @@ function Editor({ activity, units, fonts, initial }: { activity: Activity; units
               testID="story-canvas">
               <Canvas style={{ width: CANVAS.w * scale, height: CANVAS.h * scale }}>
                 <Group transform={[{ scale }]}>
-                  <Scene composition={doc} activity={activity} units={units} fonts={fonts} photo={photo} selectedId={selectedId} totals={totals} />
+                  <Scene
+                    composition={doc}
+                    activity={activity}
+                    units={units}
+                    fonts={fonts}
+                    photo={photo}
+                    selectedId={selectedId}
+                    totals={totals}
+                    live={liveId ? { id: liveId, transform: liveTransform } : undefined}
+                  />
                 </Group>
               </Canvas>
             </View>

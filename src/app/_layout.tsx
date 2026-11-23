@@ -6,13 +6,14 @@ import {
   Inter_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider, type ErrorBoundaryProps } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { ErrorScreen } from '@/components/ErrorScreen';
 import { StoreProvider } from '@/data';
 import { HealthObserver } from '@/features/HealthObserver';
 import { colors, fontFamily } from '@/theme';
@@ -32,6 +33,11 @@ const navTheme = {
     notification: colors.danger,
   },
 };
+
+/** Anything else that crashes lands here instead of a blank screen. */
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <ErrorScreen {...props} />;
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({

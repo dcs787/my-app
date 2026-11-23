@@ -99,3 +99,21 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
   silent on web. All now use aria-* props, which work on iOS and web;
   swatches are radios with aria-checked.
 - 95 unit tests, 13 e2e tests.
+
+## Fix 5: editor speed budget and crash safety (2026-11-23)
+
+- Drag, pinch and twist run on the UI thread (Reanimated shared values);
+  React saves the result once, when the fingers lift, instead of
+  re-rendering the editor on every move. No jump on release, and the move
+  survives closing and reopening the editor (e2e, screenshot-checked).
+- Measured on web with the CPU slowed 6x, 18 stickers, 60-step drag: long
+  tasks 57-58 → 8-34, drag 6.4-7.6 s → 3.4-4.3 s, React work per drag
+  94 ms → 15 ms. `node scripts/bench-editor.cjs` re-runs it.
+- A story holds up to 30 stickers, with a message at the cap.
+- Crash recovery: the editor and the app have error boundaries that show
+  "Something went wrong" with Try again, Go to activities, and an optional
+  pre-filled email (nothing is sent unless the person sends it).
+- Crash reporting: App Store Connect and TestFlight crash reports, no SDK,
+  so "Data Not Collected" stays true (launch-plan.md). Sentry only if those
+  aren't enough, with the privacy label changed in the same release.
+- Still needs an iPhone: the 15-sticker check on an older model (SETUP.md).

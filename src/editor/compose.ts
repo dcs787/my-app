@@ -6,6 +6,9 @@ import { templateById, unavailableReason } from './templates';
 export type Style = { colour: string; font: FontId };
 export const DEFAULT_STYLE: Style = { colour: '#FFFFFF', font: 'inter' };
 
+/** A story holds this many stickers: plenty for a design, and keeps the editor smooth on older iPhones. */
+export const MAX_STICKERS = 30;
+
 export const MIN_SCALE = 0.2;
 export const MAX_SCALE = 4;
 
@@ -43,7 +46,7 @@ export function addElement<C extends Pick<Composition, 'elements'>>(
   activity: Activity,
 ): { composition: C; element: CanvasElement | null } {
   const t = templateById(templateId);
-  if (!t || unavailableReason(t, activity)) return { composition: c, element: null };
+  if (!t || unavailableReason(t, activity) || c.elements.length >= MAX_STICKERS) return { composition: c, element: null };
   const scale = Math.min(1, (CANVAS.w * 0.9) / t.size.w);
   const element: CanvasElement = {
     id: newId(),
@@ -117,12 +120,23 @@ export function bringToFront<C extends Pick<Composition, 'elements'>>(c: C, id: 
   return e ? { ...c, elements: [...c.elements.filter((x) => x.id !== id), e] } : c;
 }
 
-/** Topmost element under a canvas point, accounting for each element's rotation and scale. */
-export function elementAt(elements: CanvasElement[], x: number, y: number, slop = 24): CanvasElement | null {
-  for (let i = elements.length - 1; i >= 0; i--) {
-    const e = elements[i];
+/** What hit testing needs from each element, plain data so it can run on the UI thread. */
+export type HitBox = { id: string; x: number; y: number; w: number; h: number; scale: number; rotation: number };
+
+export function hitBoxes(elements: CanvasElement[]): HitBox[] {
+  const out: HitBox[] = [];
+  for (const e of elements) {
     const t = templateById(e.templateId);
-    if (!t) continue;
+    if (t) out.push({ id: e.id, x: e.x, y: e.y, w: t.size.w, h: t.size.h, scale: e.scale, rotation: e.rotation });
+  }
+  return out;
+}
+
+/** Topmost box under a canvas point, accounting for rotation and scale. Runs on the UI thread too. */
+export function boxAt(boxes: HitBox[], x: number, y: number, slop = 24): HitBox | null {
+  'worklet';
+  for (let i = boxes.length - 1; i >= 0; i--) {
+    const e = boxes[i];
     // into the element's local frame
     const dx = x - e.x;
     const dy = y - e.y;
@@ -131,12 +145,35 @@ export function elementAt(elements: CanvasElement[], x: number, y: number, slop 
     const lx = (dx * cos - dy * sin) / e.scale;
     const ly = (dx * sin + dy * cos) / e.scale;
     const pad = slop / e.scale;
-    if (Math.abs(lx) <= t.size.w / 2 + pad && Math.abs(ly) <= t.size.h / 2 + pad) return e;
+    if (Math.abs(lx) <= e.w / 2 + pad && Math.abs(ly) <= e.h / 2 + pad) return e;
   }
   return null;
 }
 
-export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+/** Topmost element under a canvas point. */
+export function elementAt(elements: CanvasElement[], x: number, y: number, slop = 24): CanvasElement | null {
+  const hit = boxAt(hitBoxes(elements), x, y, slop);
+  return hit ? (elements.find((e) => e.id === hit.id) ?? null) : null;
+}
+
+/** A gesture's change to one sticker: move, then scale and turn about its centre. */
+export type Delta = { tx: number; ty: number; scale: number; rotation: number };
+export const NO_DELTA: Delta = { tx: 0, ty: 0, scale: 1, rotation: 0 };
+
+/** The sticker after a gesture, kept on the canvas and within the size limits. */
+export function applyDelta(e: Pick<CanvasElement, 'x' | 'y' | 'scale' | 'rotation'>, d: Delta) {
+  return {
+    x: clamp(e.x + d.tx, 0, CANVAS.w),
+    y: clamp(e.y + d.ty, 0, CANVAS.h),
+    scale: clamp(e.scale * d.scale, MIN_SCALE, MAX_SCALE),
+    rotation: e.rotation + d.rotation,
+  };
+}
+
+export function clamp(v: number, lo: number, hi: number) {
+  'worklet';
+  return Math.min(hi, Math.max(lo, v));
+}
 
 /**
  * Tap a stat on or off in a stat sticker's list. A tapped-on stat goes to the

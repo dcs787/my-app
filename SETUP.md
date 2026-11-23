@@ -157,6 +157,9 @@ the Instagram URL scheme.
       device yet: if they don't appear, tell me what the Health app shows
       under the workout.)
 - [ ] Import a FIT file from a Garmin with auto-laps → Laps (n) matches the watch
+- [ ] Editor speed: on the oldest iPhone you can borrow, add 15 or more
+      stickers, then drag, pinch and twist one. It should follow your finger
+      without stutter, and nothing jumps when you let go.
 
 ## Later: App Store
 

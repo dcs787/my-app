@@ -2,7 +2,7 @@ import { sampleActivities } from '@/data/samples';
 import { hasLaps, lapsNote, splitsNote } from '@/domain/format';
 import type { Activity } from '@/domain/types';
 
-import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, toggleStat, updateElement, MAX_SCALE } from '../compose';
+import { addElement, bringToFront, moveElement, defaultComposition, elementAt, removeElement, toggleStat, updateElement, applyDelta, MAX_SCALE, MAX_STICKERS, MIN_SCALE } from '../compose';
 import type { Shape } from '../shapes';
 import { availableStats, presentStats, statValues, templateById, TEMPLATES, unavailableReason } from '../templates';
 
@@ -194,5 +194,21 @@ describe('laps', () => {
     expect(splitsNote({ source: 'strava', detailsAt: 5 })).toBe('Splits from Strava');
     expect(splitsNote({ source: 'gpx', detailsAt: null })).toBe('Worked out from GPS');
     expect(hasLaps(hills)).toBe(true);
+  });
+});
+
+describe('limits', () => {
+  it('stops adding stickers at the cap', () => {
+    let c = { elements: [] as ReturnType<typeof defaultComposition>['elements'] };
+    for (let i = 0; i < MAX_STICKERS; i++) c = addElement(c, 'big-distance', id, style, run).composition;
+    expect(c.elements).toHaveLength(MAX_STICKERS);
+    expect(addElement(c, 'big-distance', id, style, run).element).toBeNull();
+  });
+
+  it('applies a gesture about the centre and keeps the sticker on the canvas and in size', () => {
+    const e = { x: 540, y: 960, scale: 1, rotation: 0.5 };
+    expect(applyDelta(e, { tx: 100, ty: -50, scale: 2, rotation: 0.25 })).toEqual({ x: 640, y: 910, scale: 2, rotation: 0.75 });
+    expect(applyDelta(e, { tx: 5000, ty: -5000, scale: 100, rotation: 0 })).toEqual({ x: 1080, y: 0, scale: MAX_SCALE, rotation: 0.5 });
+    expect(applyDelta(e, { tx: 0, ty: 0, scale: 0.001, rotation: 0 }).scale).toBe(MIN_SCALE);
   });
 });

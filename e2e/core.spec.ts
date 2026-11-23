@@ -28,13 +28,31 @@ test('core loop: open a run, design a story, export it, and find it again', asyn
 });
 
 test('dragging moves the selected sticker and shows its tools', async ({ page }) => {
-  await openEditor(page);
+  await page.goto('/activities/a1');
+  await page.getByRole('button', { name: 'Make a story' }).click();
+  await page.getByTestId('story-canvas').waitFor({ timeout: 30_000 });
   const box = (await page.getByTestId('story-canvas').boundingBox())!;
   const x = box.x + box.width / 2;
   const y = box.y + box.height * (930 / 1920); // the route sticker
+  const canvas = page.getByTestId('story-canvas');
+  await page.waitForTimeout(300);
+  const before = await canvas.screenshot();
   await page.mouse.move(x, y);
   await page.mouse.down();
   for (let i = 1; i <= 8; i++) await page.mouse.move(x + i * 4, y + i * 6);
   await page.mouse.up();
   await expect(page.getByRole('button', { name: 'Delete sticker' })).toBeVisible();
+  // tap empty canvas to drop the selection outline, so only the move shows
+  await page.mouse.click(box.x + 6, box.y + 6);
+  await expect(page.getByRole('button', { name: 'Delete sticker' })).toHaveCount(0);
+  await expect.poll(async () => Buffer.compare(before, await canvas.screenshot())).not.toBe(0);
+
+  // and it stays where it was dropped after the editor is reopened
+  await page.waitForTimeout(600); // autosave
+  const moved = await canvas.screenshot();
+  await page.getByRole('button', { name: 'Close editor' }).click();
+  await page.getByRole('button', { name: 'Make a story' }).click();
+  await canvas.waitFor();
+  await page.waitForTimeout(500);
+  expect(Buffer.compare(moved, await canvas.screenshot())).toBe(0);
 });

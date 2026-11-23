@@ -1,13 +1,12 @@
-import Constants from 'expo-constants';
 import { ChevronDown, ChevronUp, Mail } from 'lucide-react-native';
 import { useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { SUPPORT_EMAIL, supportMailUrl } from '@/features/support';
 import { colors, radius } from '@/theme';
 import { Button, Text, useToast } from '@/ui';
 
 /** Support address from EXPO_PUBLIC_SUPPORT_EMAIL (SETUP.md). Without it, the email button is hidden. */
-const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? '';
 
 const FAQ: { q: string; a: string }[] = [
   {
@@ -39,11 +38,9 @@ const FAQ: { q: string; a: string }[] = [
 export default function HelpScreen() {
   const toast = useToast();
   const [open, setOpen] = useState<number | null>(0);
-  const version = Constants.expoConfig?.version ?? '';
 
   async function email() {
-    const body = `\n\n—\nMileprint ${version} · ${Platform.OS} ${String(Platform.Version)}`;
-    const url = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Mileprint feedback')}&body=${encodeURIComponent(body)}`;
+    const url = supportMailUrl('Mileprint feedback');
     try {
       await Linking.openURL(url);
     } catch {

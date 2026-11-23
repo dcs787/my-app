@@ -10,7 +10,9 @@ import {
   Text,
   vec,
   type SkImage,
+  type Transforms3d,
 } from '@shopify/react-native-skia';
+import type { DerivedValue } from 'react-native-reanimated';
 
 import { CANVAS, type CanvasElement, type Composition } from '@/domain/composition';
 import type { Period, Totals } from '@/domain/totals';
@@ -30,27 +32,35 @@ export type SceneProps = {
   selectedId?: string | null;
   /** totals for the periods containing the activity (Totals stickers) */
   totals?: Record<Period, Totals>;
+  /** the sticker under the fingers, with its gesture transform (live canvas only, never the export) */
+  live?: { id: string; transform: DerivedValue<Transforms3d> };
 };
 
 /**
  * The whole story at 1080 x 1920. Props only (no hooks or context), because the
  * export renders it offscreen with drawAsImage, outside the app's React tree.
  */
-export function Scene({ composition, activity, units, fonts, photo, selectedId, totals }: SceneProps) {
+export function Scene({ composition, activity, units, fonts, photo, selectedId, totals, live }: SceneProps) {
   return (
     <Group>
       <Background bg={composition.background} photo={photo} />
-      {composition.elements.map((el) => (
-        <ElementView
-          key={el.id}
-          element={el}
-          activity={activity}
-          units={units}
-          totals={totals}
-          fonts={fonts[el.font] ?? fonts.inter}
-          selected={el.id === selectedId}
-        />
-      ))}
+      {composition.elements.map((el) => {
+        const view = (
+          <ElementView
+            element={el}
+            activity={activity}
+            units={units}
+            totals={totals}
+            fonts={fonts[el.font] ?? fonts.inter}
+            selected={el.id === selectedId}
+          />
+        );
+        return (
+          <Group key={el.id} transform={live?.id === el.id ? live.transform : undefined}>
+            {view}
+          </Group>
+        );
+      })}
     </Group>
   );
 }
