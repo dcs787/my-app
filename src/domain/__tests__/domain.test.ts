@@ -1,3 +1,4 @@
+import { isRtl, needsShaping } from '../script';
 import { activityFromGpx, activityFromManual, parseDuration } from '../import';
 import { decodePolyline, encodePolyline, haversine, projectToBox, simplify, trimEnds } from '../geo';
 import { formatDay, formatDistance, formatDuration, formatElevation, formatPace, defaultTitle } from '../format';
@@ -192,5 +193,15 @@ describe('import', () => {
     if (!bad.ok) expect(Object.keys(bad.errors).sort()).toEqual(['distance', 'duration']);
     const empty = activityFromManual({ type: 'workout', startedAt: now }, 'km');
     expect(empty.ok).toBe(false);
+  });
+});
+
+describe('scripts', () => {
+  it('spots text that needs shaping, and its direction from the first letter', () => {
+    expect(needsShaping('Morning run')).toBe(false);
+    expect(needsShaping('جري الصباح')).toBe(true);
+    expect(isRtl('جري الصباح 10K')).toBe(true);
+    expect(isRtl('10 كم')).toBe(true); // digits don't count; the first letter is Arabic
+    expect(isRtl('Run with جري')).toBe(false);
   });
 });

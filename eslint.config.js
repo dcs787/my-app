@@ -16,6 +16,7 @@ module.exports = defineConfig([
           paths: [
             { name: 'lucide-react-native', message: 'Import icons from @/ui/icons (one module per icon).', allowTypeImports: true },
             { name: '@expo-google-fonts/inter', message: 'Import one weight, e.g. @expo-google-fonts/inter/400Regular.' },
+            { name: '@expo-google-fonts/noto-sans-arabic', message: 'Require one weight file, as in src/editor/fonts.tsx.' },
           ],
         },
       ],

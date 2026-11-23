@@ -4,7 +4,12 @@ import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type { FontId } from '@/domain/composition';
 
 /** Each template font has a display face (numbers, titles) and a text face (labels). All OFL-licensed. */
-export type FontPair = { value: SkTypeface; label: SkTypeface };
+export type FontPair = {
+  value: SkTypeface;
+  label: SkTypeface;
+  /** for scripts the face lacks (Arabic), used with shaped text */
+  fallback?: SkTypeface;
+};
 export type TemplateFonts = Record<FontId, FontPair>;
 
 export const FONT_NAMES: Record<FontId, string> = {
@@ -25,6 +30,7 @@ const FILES = {
   mono800: require('@expo-google-fonts/jetbrains-mono/800ExtraBold/JetBrainsMono_800ExtraBold.ttf'),
   oswald500: require('@expo-google-fonts/oswald/500Medium/Oswald_500Medium.ttf'),
   oswald700: require('@expo-google-fonts/oswald/700Bold/Oswald_700Bold.ttf'),
+  arabic: require('@expo-google-fonts/noto-sans-arabic/600SemiBold/NotoSansArabic_600SemiBold.ttf'),
 };
 
 const FontsContext = createContext<TemplateFonts | null>(null);
@@ -40,19 +46,20 @@ export function TemplateFontsProvider({ children }: { children: ReactNode }) {
   const mono800 = useTypeface(FILES.mono800);
   const oswald500 = useTypeface(FILES.oswald500);
   const oswald700 = useTypeface(FILES.oswald700);
+  const arabic = useTypeface(FILES.arabic);
 
   const fonts = useMemo<TemplateFonts | null>(() => {
-    if (!inter600 || !inter800 || !archivo || !serif || !serifItalic || !mono500 || !mono800 || !oswald500 || !oswald700) {
+    if (!inter600 || !inter800 || !archivo || !serif || !serifItalic || !mono500 || !mono800 || !oswald500 || !oswald700 || !arabic) {
       return null;
     }
     return {
-      inter: { value: inter800, label: inter600 },
-      display: { value: archivo, label: inter600 },
-      serif: { value: serifItalic, label: serif },
-      mono: { value: mono800, label: mono500 },
-      condensed: { value: oswald700, label: oswald500 },
+      inter: { value: inter800, label: inter600, fallback: arabic },
+      display: { value: archivo, label: inter600, fallback: arabic },
+      serif: { value: serifItalic, label: serif, fallback: arabic },
+      mono: { value: mono800, label: mono500, fallback: arabic },
+      condensed: { value: oswald700, label: oswald500, fallback: arabic },
     };
-  }, [inter600, inter800, archivo, serif, serifItalic, mono500, mono800, oswald500, oswald700]);
+  }, [inter600, inter800, archivo, serif, serifItalic, mono500, mono800, oswald500, oswald700, arabic]);
 
   return <FontsContext.Provider value={fonts}>{children}</FontsContext.Provider>;
 }

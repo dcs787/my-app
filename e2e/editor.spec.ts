@@ -58,3 +58,15 @@ test('choose which stats a sticker shows, in order', async ({ page }) => {
   await expect(chip(/^1\s+Distance$/)).toBeVisible();
   await expect(chip(/^3\s+Time$/)).toBeVisible();
 });
+
+test('Arabic words go on a sticker, shaped right to left, without errors', async ({ page }) => {
+  await openEditor(page);
+  const n0 = await stickerCount(page);
+  await page.getByRole('button', { name: 'Add a sticker' }).click();
+  await page.getByText('Text', { exact: true }).first().click();
+  await page.getByLabel('Your words').fill('أسرع ١٠ كم هذا العام');
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect.poll(() => stickerCount(page)).toBe(n0 + 1);
+  await page.getByRole('button', { name: 'Layers' }).click();
+  await expect(page.getByText('“أسرع ١٠ كم هذا العام”')).toBeVisible();
+});

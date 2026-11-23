@@ -43,4 +43,4 @@ Choose which stats a sticker shows,templates,should,no,yes,fix 3 done: 7 stat st
 Editor speed budget and crash reporting,platform,should,no,no,fix 5: stability complaints (8)
 "Small download, never a forced watermark",platform,should,no,partial,no watermark anywhere; download size to measure on the first production build
 "More sport types (skate, ski, row, climb, yoga, elliptical)",data,could,no,yes,"from Health, Strava, files; own totals families"
-Arabic-capable font,templates,could,no,no,fix 8: thin
+Arabic-capable font,templates,could,no,yes,"fix 8 done: shaped right-to-left text, Noto Sans Arabic fallback"

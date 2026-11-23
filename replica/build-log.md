@@ -137,3 +137,14 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
   elliptical), Strava (Yoga, Pilates, Elliptical) and files.
 - Each is its own family, so elliptical miles never count towards running
   totals ("1 elliptical session", "3 yoga sessions").
+
+## Fix 8: Arabic on stickers (2026-11-23)
+
+- Text with Arabic (or another right-to-left script) is drawn with Skia's
+  paragraph shaper, so letters join and read right to left, with Noto Sans
+  Arabic (OFL, one weight, 194 KB) as the fallback for every sticker font.
+  Mixed Arabic and Latin works; the first letter sets the direction.
+- Covers activity titles (from Strava, Health or typed) and the text sticker.
+- Hebrew and other scripts shape correctly but have no glyphs in the
+  bundled fonts yet; add a Noto face the same way if people ask.
+- 99 unit tests, 14 e2e tests; assets 2.5 MB of the 3 MB budget.

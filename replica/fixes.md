@@ -97,7 +97,7 @@ Evidence × cheapness, top first. Each is now a row in `features.csv`
 | 5 | **Done (device check pending).** **Speed budget for the editor**: test with 15 stickers on an older iPhone; no crash or freeze adding elements; crash reporting before launch | S | replica-test | stability, 8 |
 | 6 | **Done (check the native size on the first build).** **Small app, no watermark**: keep the download under ~60 MB (check each build); never force a watermark | S | replica-launch | footprint 4, watermark 2 |
 | 7 | **Done.** **More sports**: skate, ski, row, elliptical, yoga, climb as their own types with icons | S | replica-build | sports 1, wrong type 1 (**thin**) |
-| 8 | **Arabic-capable font** (Noto Sans Arabic, OFL) | S | replica-build | 1 (**thin**) |
+| 8 | **Done.** **Arabic-capable font** (Noto Sans Arabic, OFL) | S | replica-build | 1 (**thin**) |
 
 Android is out of scope for now. The codebase is Expo, so it's possible later.
 Pricing: no complaints, because the original is free. Reviewers value that

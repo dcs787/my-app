@@ -13,8 +13,8 @@ no Stripe and no email sending in v1.
 
 | check | result |
 | --- | --- |
-| e2e suite (`npm run build && npm run e2e`) | **13 / 13 passed** (core loop with 1080×1920 export and reopen, drag, text/totals/layers, unavailable stickers, choosing a sticker's stats, laps and splits, clipboard PNG + long-press save, empty state, manual entry, units, help, keyboard, delete all data) |
-| unit tests (`npm test`) | **95 / 95 passed** |
+| e2e suite (`npm run build && npm run e2e`) | **14 / 14 passed** (core loop with 1080×1920 export and reopen, drag, text/totals/layers, unavailable stickers, choosing a sticker's stats, laps and splits, Arabic text, drag persistence, clipboard PNG + long-press save, empty state, manual entry, units, help, keyboard, delete all data) |
+| unit tests (`npm test`) | **99 / 99 passed** |
 | typecheck + lint (`npm run typecheck`, `npx expo lint`) | **0 errors, 0 warnings** |
 | no open S1 or S2 bugs | **none known**, but the device checklist (`SETUP.md` step 7) hasn't been run, so device-only bugs are unknown |
 | parity (`parity.py`) | **13 / 13 must-haves**, score **91.1** |

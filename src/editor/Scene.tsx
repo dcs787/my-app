@@ -3,6 +3,7 @@ import {
   Group,
   Image,
   LinearGradient,
+  Paragraph,
   Path,
   Rect,
   RoundedRect,
@@ -20,6 +21,7 @@ import type { Activity, Units } from '@/domain/types';
 
 import type { FontPair, TemplateFonts } from './fonts';
 import type { Shape } from './shapes';
+import { needsShaping, shapedLine } from './shapedText';
 import { templateById } from './templates';
 
 export type SceneProps = {
@@ -146,6 +148,16 @@ export function Shapes({ shapes, fonts, colour }: { shapes: Shape[]; fonts: Font
           if (!s.text) return null;
           const text = s.caps ? s.text.toUpperCase() : s.text;
           const face = s.face === 'value' ? fonts.value : fonts.label;
+          if (needsShaping(text)) {
+            // Arabic and other joined, right-to-left scripts: shaped, with a fallback font
+            const line = shapedLine(text, face, fonts.fallback, s.size, colour, s.maxWidth);
+            const left = s.align === 'center' ? s.x - line.width / 2 : s.align === 'right' ? s.x - line.width : s.x;
+            return (
+              <Group key={i} opacity={s.opacity ?? 1}>
+                <Paragraph paragraph={line.paragraph} x={left} y={s.y - line.baseline} width={Math.ceil(line.width) + 1} />
+              </Group>
+            );
+          }
           let font = Skia.Font(face, s.size);
           let width = font.measureText(text).width;
           if (s.maxWidth && width > s.maxWidth) {
