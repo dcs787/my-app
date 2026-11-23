@@ -1,5 +1,5 @@
 import { router, type ErrorBoundaryProps } from 'expo-router';
-import { RotateCcw, TriangleAlert } from 'lucide-react-native';
+import { RotateCcw, TriangleAlert } from '@/ui/icons';
 import { Linking, StyleSheet, Text as RNText, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

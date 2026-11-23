@@ -1,5 +1,5 @@
 import { router, Stack } from 'expo-router';
-import { Activity as StravaIcon, FileUp, HeartPulse, PenLine, Plus, RefreshCw } from 'lucide-react-native';
+import { Activity as StravaIcon, FileUp, HeartPulse, PenLine, Plus, RefreshCw } from '@/ui/icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 

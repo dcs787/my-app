@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { Activity as ActivityIcon, FlaskConical, HeartPulse, LifeBuoy, Link2, Palette, RefreshCw, Trash, Unlink } from 'lucide-react-native';
+import { Activity as ActivityIcon, FlaskConical, HeartPulse, LifeBuoy, Link2, Palette, RefreshCw, Trash, Unlink } from '@/ui/icons';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { confirm } from '@/components/confirm';

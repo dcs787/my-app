@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router/js-tabs';
-import { Activity, Settings } from 'lucide-react-native';
+import { Activity, Settings } from '@/ui/icons';
 import type { ColorValue } from 'react-native';
 
 import { colors, fontFamily } from '@/theme';

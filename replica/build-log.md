@@ -117,3 +117,16 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
   so "Data Not Collected" stays true (launch-plan.md). Sentry only if those
   aren't enough, with the privacy label changed in the same release.
 - Still needs an iPhone: the 15-sticker check on an older model (SETUP.md).
+
+## Fix 6: a small download (2026-11-23)
+
+- iOS JavaScript and assets: 14.4 MB → 7.7 MB, nothing removed.
+  - Icons: importing from lucide-react-native pulled in every icon (2.1 MB
+    of the 5.9 MB bundle). Now one module per icon via `src/ui/icons.ts`.
+  - Fonts: importing from @expo-google-fonts/inter bundled all 18 Inter
+    files to use 5 (assets 6.7 MB → 2.3 MB).
+  - A lint rule blocks both imports from coming back.
+- `npm run size` exports the iOS bundle and checks it against a budget
+  (JS 6.5 MB, assets 3 MB). The native part comes on top; read it from each
+  EAS build or App Store Connect's file sizes (target: under 60 MB total).
+- No watermark anywhere, by design.

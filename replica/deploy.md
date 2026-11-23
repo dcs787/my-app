@@ -87,6 +87,7 @@ HealthKit notes) and screenshots from the production build.
 
 | what | how | notes |
 | --- | --- | --- |
+| download size | `npm run size` before each build (JS + assets budget); EAS build page or App Store Connect → App Store File Sizes for the full download | target under 60 MB |
 | crashes and hangs | App Store Connect / TestFlight crash reports, Xcode Organizer | no SDK, so "Data Not Collected" stays true |
 | token function | Supabase function logs and invocation errors | a failure spike means Strava sign-ins are failing |
 | website up | any free uptime monitor on `https://mileprint.app` | optional |

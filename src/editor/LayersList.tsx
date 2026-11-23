@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Trash } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Trash } from '@/ui/icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { CanvasElement } from '@/domain/composition';

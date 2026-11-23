@@ -10,7 +10,7 @@ import {
   WavesHorizontal,
   Wind,
   type LucideIcon,
-} from 'lucide-react-native';
+} from '@/ui/icons';
 
 import type { ActivityType } from '@/domain/types';
 

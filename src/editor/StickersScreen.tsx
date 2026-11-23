@@ -1,4 +1,4 @@
-import { Check, Type } from 'lucide-react-native';
+import { Check, Type } from '@/ui/icons';
 import { useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 

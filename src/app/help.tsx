@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronUp, Mail } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Mail } from '@/ui/icons';
 import { useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 

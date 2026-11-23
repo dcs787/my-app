@@ -1,7 +1,7 @@
 import { Canvas, Group, useImage, type Transforms3d } from '@shopify/react-native-skia';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, ListOrdered, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from 'lucide-react-native';
+import { ArrowUpToLine, Copy, Download, ImagePlus, Info, Layers, ListOrdered, Palette, PenLine, Plus, Send, Share, Trash, Type, X } from '@/ui/icons';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector, usePanGesture, usePinchGesture, useRotationGesture, useSimultaneousGestures } from 'react-native-gesture-handler';

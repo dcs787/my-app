@@ -12,7 +12,7 @@ import {
   Share,
   Type,
   X,
-} from 'lucide-react-native';
+} from '@/ui/icons';
 import { useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 

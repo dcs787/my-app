@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react-native';
+import type { LucideIcon } from '@/ui/icons';
 import { ActivityIndicator, Pressable, StyleSheet, View, type GestureResponderEvent } from 'react-native';
 
 import { colors, radius, type ColorRole } from '@/theme';

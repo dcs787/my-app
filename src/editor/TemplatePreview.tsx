@@ -1,5 +1,5 @@
 import { Canvas, Group, RoundedRect } from '@shopify/react-native-skia';
-import { Check } from 'lucide-react-native';
+import { Check } from '@/ui/icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { Period, Totals } from '@/domain/totals';

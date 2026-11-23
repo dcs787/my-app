@@ -70,7 +70,8 @@
     "test": "jest",
     "web:setup": "node -e \"require('fs').mkdirSync('public',{recursive:true});require('fs').copyFileSync(require.resolve('canvaskit-wasm/bin/full/canvaskit.wasm'),'public/canvaskit.wasm')\"",
     "build": "npm run web:setup && expo export -p web",
-    "e2e": "playwright test --trace off"
+    "e2e": "playwright test --trace off",
+    "size": "node scripts/size-check.mjs"
   },
   "private": true,
   "jest": {
