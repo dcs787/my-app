@@ -1,7 +1,7 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { Copy, Sparkles, Trash } from '@/ui/icons';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { confirm } from '@/components/confirm';
@@ -24,8 +24,12 @@ import {
 } from '@/domain/format';
 import { ACTIVITY_TYPES, type Activity, type Lap, type Split, type Units } from '@/domain/types';
 import { useStravaDetails } from '@/features/stravaDetails';
+import { STRAVA } from '@/integrations/strava/config';
 import { colors, radius } from '@/theme';
 import { Button, Chip, EmptyState, SegmentedTabs, StatBlock, Text, TextField, useToast } from '@/ui';
+
+/** Strava's brand orange, which its guidelines name for "View on Strava" links */
+const STRAVA_ORANGE = '#FC5200';
 
 export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -80,7 +84,18 @@ function Detail({ activity: a, units }: { activity: Activity; units: Units }) {
       <TextField label="Title" value={title} onChangeText={setTitle} onBlur={saveTitle} onSubmitEditing={saveTitle} returnKeyType="done" maxLength={120} />
       <Text variant="footnote" color="textMuted">
         {formatDay(a)} · {SOURCE_LABEL[a.source]}
+        {a.deviceName ? ` · Recorded on ${a.deviceName}` : ''}
       </Text>
+      {a.source === 'strava' && a.externalId ? (
+        <Text
+          variant="footnote"
+          weight="700"
+          accessibilityRole="link"
+          style={{ color: STRAVA_ORANGE, alignSelf: 'flex-start' }}
+          onPress={() => Linking.openURL(STRAVA.activityUrl(a.externalId!)).catch(() => {})}>
+          View on Strava
+        </Text>
+      ) : null}
 
       {a.routePolyline ? (
         <View style={[styles.map, { height: mapW * 0.6 }]}>

@@ -148,3 +148,13 @@ reference screenshots' width). Parity: milestone 1 **61.6**, milestone 2
 - Hebrew and other scripts shape correctly but have no glyphs in the
   bundled fonts yet; add a Noto face the same way if people ask.
 - 99 unit tests, 14 e2e tests; assets 2.5 MB of the 3 MB budget.
+
+## Strava brand guidelines (2026-11-23)
+
+- Checked against developers.strava.com/guidelines (rev. 2025-09-29):
+  OAuth goes to strava.com/oauth/mobile/authorize; interoperability is only
+  ever "Compatible with Strava"; Strava's name is never bigger than the text
+  around it or than Mileprint's; no Strava logo used as or in the app icon.
+- Added "View on Strava" (bold, #FC5200) on activities from Strava, linking
+  to the original, and "Recorded on <device>" from Strava's device name, the
+  attribution Strava asks for (schema v3 adds `device_name`).

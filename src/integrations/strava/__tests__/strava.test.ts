@@ -166,6 +166,7 @@ describe('activity details', () => {
       { distance: 1000, elapsed_time: 285, moving_time: 285, elevation_difference: -1, split: 2 },
     ],
     splits_standard: [{ distance: 1609.3, elapsed_time: 465, moving_time: 462, elevation_difference: 1, split: 1 }],
+    device_name: 'Garmin Forerunner 265',
   };
 
   it('maps laps and Strava splits, dropping empty laps', () => {
@@ -189,7 +190,7 @@ describe('activity details', () => {
     expect(await fetchStravaDetails(store, memTokens(fresh()), activity, f, () => 1234)).toBe('saved');
     expect(urls).toEqual([`${STRAVA.apiBase}/activities/9?include_all_efforts=false`]);
     const saved = await store.getActivity(activity.id);
-    expect(saved).toMatchObject({ detailsAt: 1234 });
+    expect(saved).toMatchObject({ detailsAt: 1234, deviceName: 'Garmin Forerunner 265' });
     expect(saved!.laps).toHaveLength(2);
     expect(saved!.splits.length).toBe(3);
   });

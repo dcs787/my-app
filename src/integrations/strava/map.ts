@@ -79,7 +79,7 @@ export function mapStravaActivity(s: StravaActivity): NewActivity {
  * splits out from the full recording, so they replace splits from the
  * summary (which has none).
  */
-export function mapStravaDetails(d: StravaDetailedActivity): { laps: Lap[]; splits: Split[] } {
+export function mapStravaDetails(d: StravaDetailedActivity): { laps: Lap[]; splits: Split[]; deviceName: string | null } {
   const laps = cleanLaps(
     (d.laps ?? []).map((l, i) => ({
       index: i + 1,
@@ -99,5 +99,9 @@ export function mapStravaDetails(d: StravaDetailedActivity): { laps: Lap[]; spli
         timeS: s.moving_time ?? s.elapsed_time,
         ...(s.elevation_difference != null ? { elevationDeltaM: s.elevation_difference } : {}),
       }));
-  return { laps, splits: [...splits(d.splits_standard, 'mi'), ...splits(d.splits_metric, 'km')] };
+  return {
+    laps,
+    splits: [...splits(d.splits_standard, 'mi'), ...splits(d.splits_metric, 'km')],
+    deviceName: d.device_name?.trim().slice(0, 80) || null,
+  };
 }

@@ -9,6 +9,8 @@ export const STRAVA = {
   tokenUrl: process.env.EXPO_PUBLIC_STRAVA_TOKEN_URL ?? '',
   authorizeUrl: 'https://www.strava.com/oauth/mobile/authorize',
   apiBase: 'https://www.strava.com/api/v3',
+  /** link back to an activity on Strava: the brand guidelines ask for the words "View on Strava" */
+  activityUrl: (id: string) => `https://www.strava.com/activities/${encodeURIComponent(id)}`,
   deauthorizeUrl: 'https://www.strava.com/oauth/deauthorize',
   /** read all activities, including private ones (they're the user's own) */
   scope: 'activity:read_all',

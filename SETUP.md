@@ -152,6 +152,8 @@ the Instagram URL scheme.
 - [ ] Copy stickers → tap one → paste it onto a photo in an Instagram story
 - [ ] Open a Strava run you pressed the lap button on → after a second or two
       the Laps tab appears, and Splits says "Splits from Strava"
+- [ ] On that run, the line under the date says "Recorded on" your watch, and
+      "View on Strava" opens the activity in Strava
 - [ ] On Apple Watch, start a run and double-tap the screen to mark a few
       segments → in Mileprint the run shows them as laps. (Not tested on a
       device yet: if they don't appear, tell me what the Health app shows

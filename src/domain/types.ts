@@ -61,6 +61,8 @@ export type Activity = {
   laps: Lap[];
   /** when laps and splits were last fetched from the provider (Strava), ms */
   detailsAt?: number | null;
+  /** the watch or app that recorded it, as the provider names it ("Garmin Forerunner 265") */
+  deviceName?: string | null;
   /** Google encoded polyline, simplified */
   routePolyline?: string | null;
   createdAt: number;

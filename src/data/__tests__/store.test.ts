@@ -108,7 +108,7 @@ it('upgrades a version 1 database without losing activities', async () => {
   );
   await migrate(db);
   const store = createSqliteStore(db, newId, now);
-  expect(await store.getActivity('old')).toMatchObject({ title: 'Before laps', laps: [], detailsAt: null });
+  expect(await store.getActivity('old')).toMatchObject({ title: 'Before laps', laps: [], detailsAt: null, deviceName: null });
 });
 
 describe.each(makers)('%s store', (_name, make) => {
@@ -176,8 +176,8 @@ describe.each(makers)('%s store', (_name, make) => {
     expect((await store.getActivity(health.activity.id))!.laps).toEqual(laps);
 
     const splits = [{ unit: 'km' as const, index: 1, distanceM: 1000, timeS: 300 }];
-    await store.updateActivity(health.activity.id, { laps: [laps[0]], splits, detailsAt: 99 });
-    expect(await store.getActivity(health.activity.id)).toMatchObject({ laps: [laps[0]], splits, detailsAt: 99 });
+    await store.updateActivity(health.activity.id, { laps: [laps[0]], splits, detailsAt: 99, deviceName: 'Apple Watch' });
+    expect(await store.getActivity(health.activity.id)).toMatchObject({ laps: [laps[0]], splits, detailsAt: 99, deviceName: 'Apple Watch' });
   });
 
   it('updates and deletes, deleting the designs with the activity', async () => {

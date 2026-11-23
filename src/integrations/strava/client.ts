@@ -125,8 +125,8 @@ export async function fetchStravaDetails(
       return 'gone';
     }
     if (!res.ok) throw new Error(`Strava error ${res.status}`);
-    const { laps, splits } = mapStravaDetails((await res.json()) as StravaDetailedActivity);
-    await store.updateActivity(activity.id, { laps, ...(splits.length ? { splits } : {}), detailsAt: now() });
+    const { laps, splits, deviceName } = mapStravaDetails((await res.json()) as StravaDetailedActivity);
+    await store.updateActivity(activity.id, { laps, ...(splits.length ? { splits } : {}), deviceName, detailsAt: now() });
     return 'saved';
   }
 }

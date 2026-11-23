@@ -55,6 +55,10 @@ export const MIGRATIONS: string[] = [
   ALTER TABLE activities ADD COLUMN laps TEXT NOT NULL DEFAULT '[]';
   ALTER TABLE activities ADD COLUMN details_at INTEGER;
   `,
+  // v3: the recording device, for attribution ("Recorded on Garmin Forerunner 265")
+  `
+  ALTER TABLE activities ADD COLUMN device_name TEXT;
+  `,
 ];
 
 export async function migrate(db: SQLiteDatabase) {
@@ -90,6 +94,7 @@ type ActivityRow = {
   splits: string;
   laps: string;
   details_at: number | null;
+  device_name: string | null;
   route_polyline: string | null;
   created_at: number;
   updated_at: number;
@@ -115,6 +120,7 @@ const fromRow = (r: ActivityRow): Activity => ({
   splits: safeJson(r.splits, []),
   laps: safeJson(r.laps, []),
   detailsAt: r.details_at,
+  deviceName: r.device_name,
   routePolyline: r.route_polyline,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -212,12 +218,12 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
         return { activity: fromRow(row!), duplicate: true, merged: true };
       }
       const t = now();
-      const activity: Activity = { ...a, detailsAt: a.detailsAt ?? null, id: newId(), createdAt: t, updatedAt: t };
+      const activity: Activity = { ...a, detailsAt: a.detailsAt ?? null, deviceName: a.deviceName ?? null, id: newId(), createdAt: t, updatedAt: t };
       await db.runAsync(
         `INSERT INTO activities (id, source, external_id, file_hash, type, title, location_name, started_at,
           utc_offset_min, distance_m, moving_time_s, elapsed_time_s, elevation_gain_m, avg_hr, max_hr, calories,
-          splits, laps, details_at, route_polyline, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          splits, laps, details_at, device_name, route_polyline, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           activity.id,
           activity.source,
@@ -238,6 +244,7 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
           JSON.stringify(activity.splits),
           JSON.stringify(activity.laps ?? []),
           activity.detailsAt ?? null,
+          activity.deviceName ?? null,
           activity.routePolyline ?? null,
           t,
           t,
@@ -259,6 +266,7 @@ export function createSqliteStore(db: SQLiteDatabase, newId: () => string, now: 
       if (patch.laps !== undefined) add('laps', JSON.stringify(patch.laps));
       if (patch.splits !== undefined) add('splits', JSON.stringify(patch.splits));
       if (patch.detailsAt !== undefined) add('details_at', patch.detailsAt ?? null);
+      if (patch.deviceName !== undefined) add('device_name', patch.deviceName ?? null);
       if (!sets.length) return;
       await db.runAsync(`UPDATE activities SET ${sets.join(', ')}, updated_at = ? WHERE id = ?`, [...vals, now(), id]);
       events.emit();
